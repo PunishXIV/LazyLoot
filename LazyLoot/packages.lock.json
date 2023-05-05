@@ -13,6 +13,12 @@
         "requested": "[1.11.46, )",
         "resolved": "1.11.46",
         "contentHash": "dLMn4EVfJBHWmWK4Uh0XGD76FPLHI0qr2Tm0s1m/xmgiHb1JUb9zB8AzO8HtrkBBlMN6JfCUBYddhqC0hZNR+g=="
+      },
+      "ecommons": {
+        "type": "Project"
+      },
+      "punishlib": {
+        "type": "Project"
       }
     }
   }

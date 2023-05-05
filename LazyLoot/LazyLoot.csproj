@@ -50,6 +50,8 @@
 	<ItemGroup>
 		<PackageReference Include="DalamudPackager" Version="2.1.10" />
 		<PackageReference Include="HtmlAgilityPack" Version="1.11.46" />
+		<ProjectReference Include="..\ECommons\ECommons\ECommons.csproj" />
+		<ProjectReference Include="..\PunishLib\PunishLib\PunishLib.csproj" />
 		<Reference Include="FFXIVClientStructs">
 			<HintPath>$(DalamudLibPath)FFXIVClientStructs.dll</HintPath>
 			<Private>false</Private>
@@ -79,5 +81,11 @@
 			<HintPath>$(DalamudLibPath)Lumina.Excel.dll</HintPath>
 			<Private>false</Private>
 		</Reference>
+	</ItemGroup>
+
+	<ItemGroup>
+	  <None Update="LazyLoot.json">
+	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+	  </None>
 	</ItemGroup>
 </Project>

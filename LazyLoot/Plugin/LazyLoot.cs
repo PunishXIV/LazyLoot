@@ -10,6 +10,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using ECommons;
+using PunishLib;
+using System.Diagnostics;
 
 namespace LazyLoot.Plugin
 {
@@ -20,10 +23,14 @@ namespace LazyLoot.Plugin
         internal static DtrBarEntry DtrEntry;
         internal static bool FulfEnabled;
         internal List<BaseCommand> commands = new();
+        internal static LazyLoot P;
 
         public LazyLoot(DalamudPluginInterface pluginInterface)
         {
             pluginInterface.Create<Service>();
+            P = this;
+            ECommonsMain.Init(pluginInterface, this, ECommons.Module.All);
+            PunishLibMain.Init(pluginInterface, this);
 
             config = Service.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
             config.Initialize(Service.PluginInterface);
@@ -77,6 +84,8 @@ namespace LazyLoot.Plugin
             if (!disposing)
                 return;
 
+            ECommonsMain.Dispose();
+            PunishLibMain.Dispose();
             PluginLog.Information(string.Format($">>Stop LazyLoot<<"));
             DtrEntry.Remove();
 

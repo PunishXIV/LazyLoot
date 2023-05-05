@@ -58,6 +58,12 @@ namespace LazyLoot.Ui
                     ImGui.EndTabItem();
                 }
 
+                if (ImGui.BeginTabItem("About"))
+                {
+                    PunishLib.ImGuiMethods.AboutTab.Draw(P);
+                    ImGui.EndTabItem();
+                }
+
                 ImGui.EndTabBar();
             }
         }
