@@ -1,3 +1,9 @@
+[![image](https://discordapp.com/api/guilds/1001823907193552978/embed.png?style=banner2)](https://discord.gg/Zzrcc8kmvy)
+
+Repo Url: 
+
+`https://love.puni.sh/ment.json`
+
 # FFXIV-LazyLoot 
 
 Plugin for Final Fantasy XIV (Originally by 53m1k0l0n)
