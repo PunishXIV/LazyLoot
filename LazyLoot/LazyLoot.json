@@ -1,0 +1,17 @@
+{
+  "Author": "53m1k0l0n",
+  "Name": "LazyLoot",
+  "Punchline": "Dungeon Loot but Lazy.",
+  "Description": "Roll command with various arguments need | needonly | greed | pass | passall. \nChat and Toast output and delay for rolling.",
+  "Changelog": "Added\n- [FULF] Allows customization of initial FULF rolling delay.",
+  "Tags": [
+    "plugin",
+    "loot",
+    "utility",
+    "other"
+  ],
+  "CategoryTags": null,
+  "RepoUrl": "https://github.com/53m1k0l0n/FFXIV-LazyLoot",
+  "ImageUrls": null,
+  "IconUrl": "https://raw.githubusercontent.com/53m1k0l0n/FFXIV-LazyLoot/main/LazyLoot/Images/icon.png"
+}
