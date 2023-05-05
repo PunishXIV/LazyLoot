@@ -1,10 +1,12 @@
-[![](https://dcbadge.vercel.app/api/server/Db938TNdMv)](https://discord.gg/Db938TNdMv)
+[![image](https://discordapp.com/api/guilds/1001823907193552978/embed.png?style=banner2)](https://discord.gg/Zzrcc8kmvy)
+
+Repo Url: 
+
+`https://love.puni.sh/ment.json`
 
 # FFXIV-LazyLoot 
 
-[Repo](https://raw.githubusercontent.com/53m1k0l0n/FF14_Plugins/main/repo.json)
-
-Plugin for Final Fantasy XIV
+Plugin for Final Fantasy XIV (Originally by 53m1k0l0n)
 
 Various commands to need, greed, or pass on all loot. Chat and Toast output and delay for rolling. Configurable to optionally always pass certain items, like if an item level doesnt met your minimum requirement or if the item (Minion, Cards, Musics, etc) is already unlocked (item has a checkmark).
 
