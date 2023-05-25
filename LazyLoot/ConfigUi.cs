@@ -1,5 +1,4 @@
 using Dalamud.Interface.Colors;
-using Dalamud.Interface.Internal.Notifications;
 using Dalamud.Interface.Windowing;
 using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
