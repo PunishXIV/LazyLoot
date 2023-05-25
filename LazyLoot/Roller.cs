@@ -17,11 +17,6 @@ internal static class Roller
     unsafe delegate bool RollItemRaw(Loot* lootIntPtr, RollResult option, uint lootItemIndex);
     static RollItemRaw _rollItemRaw;
 
-    public static void Init()
-    {
-        _rollItemRaw = Marshal.GetDelegateForFunctionPointer<RollItemRaw>(Svc.SigScanner.ScanText("41 83 F8 ?? 0F 83 ?? ?? ?? ?? 48 89 5C 24 08"));
-    }
-
     static uint _itemId = 0, _index = 0;
     public static void Clear()
     {
@@ -205,6 +200,7 @@ internal static class Roller
     {
         try
         {
+            _rollItemRaw ??= Marshal.GetDelegateForFunctionPointer<RollItemRaw>(Svc.SigScanner.ScanText("41 83 F8 ?? 0F 83 ?? ?? ?? ?? 48 89 5C 24 08"));
             _rollItemRaw?.Invoke(Loot.Instance(), option, index).ToString();
         }
         catch (Exception ex)

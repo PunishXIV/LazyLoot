@@ -2,6 +2,7 @@ using Dalamud.Interface.Colors;
 using Dalamud.Interface.Internal.Notifications;
 using Dalamud.Interface.Windowing;
 using ECommons.DalamudServices;
+using ECommons.ImGuiMethods;
 using ImGuiNET;
 using System;
 using System.Numerics;
@@ -72,7 +73,7 @@ public class ConfigUi : Window, IDisposable
     public override void OnClose()
     {
         LazyLoot.Config.Save();
-        Svc.PluginInterface.UiBuilder.AddNotification("Configuration saved", "Lazy Loot", NotificationType.Success);
+        Notify.Success("Configuration saved");
         base.OnClose();
     }
 

@@ -11,6 +11,7 @@ using Dalamud.Logging;
 using Dalamud.Plugin;
 using ECommons;
 using ECommons.DalamudServices;
+using ECommons.ImGuiMethods;
 using PunishLib;
 using System;
 using System.Collections.Generic;
@@ -41,8 +42,9 @@ public class LazyLoot : IDalamudPlugin, IDisposable
 
         Config = Svc.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
         ConfigUi = new ConfigUi();
-        Svc.PluginInterface.UiBuilder.OpenConfigUi += OnOpenConfigUi;
         DtrEntry ??= Svc.DtrBar.Get("LazyLoot");
+
+        Svc.PluginInterface.UiBuilder.OpenConfigUi += OnOpenConfigUi;
         Svc.Chat.CheckMessageHandled += NoticeLoot;
 
         Svc.Commands.AddHandler("/lazy", new CommandInfo((c, a) => OnOpenConfigUi())
@@ -141,7 +143,10 @@ public class LazyLoot : IDalamudPlugin, IDisposable
     {
         if (Config.FulfEnabled)
         {
-            DtrEntry.Text = "LL-FULF - " + _rollArray[Config.FulfRoll % 3].ToString();
+            DtrEntry.Text = new SeString(
+                new IconPayload(BitmapFontIcon.Dice),
+                new TextPayload(_rollArray[Config.FulfRoll % 3].ToString())
+                );
             DtrEntry.Shown = true;
         }
         else
@@ -161,12 +166,12 @@ public class LazyLoot : IDalamudPlugin, IDisposable
         if (_rollOption == RollResult.UnAwarded) return;
         if (DateTime.Now < _nextRollTime) return;
 
+        //No rolling in cutscene.
+        if (Svc.Condition[ConditionFlag.OccupiedInCutSceneEvent]) return;
+
         _nextRollTime = DateTime.Now.AddMilliseconds(Math.Max(150, new Random()
             .Next((int)(Config.MinRollDelayInSeconds * 1000),
             (int)(Config.MaxRollDelayInSeconds * 1000))));
-
-        //No rolling in cutscene.
-        if (Svc.Condition[ConditionFlag.OccupiedInCutSceneEvent]) return;
 
         try
         {
@@ -234,7 +239,7 @@ public class LazyLoot : IDalamudPlugin, IDisposable
             _ => "Cast your lot.",
         })
         {
-            Svc.PluginInterface.UiBuilder.AddNotification(">>New Loot<<", "Lazy Loot", NotificationType.Info);
+            Notify.Info(">>New Loot<<");
 
             _nextRollTime = DateTime.Now.AddMilliseconds(new Random()
                 .Next((int)(Config.FulfMinRollDelayInSeconds * 1000),
