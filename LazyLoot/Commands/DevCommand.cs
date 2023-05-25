@@ -1,5 +1,6 @@
 ﻿using Dalamud.Logging;
 using Dalamud.Utility;
+using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using HtmlAgilityPack;
 using LazyLoot.Attributes;
@@ -7,7 +8,6 @@ using Lumina.Excel.GeneratedSheets;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
-using static System.Net.Mime.MediaTypeNames;
 
 namespace LazyLoot.Commands
 {
@@ -17,7 +17,7 @@ namespace LazyLoot.Commands
         [Command("/lldev", "Dev Command", false)]
         public async void DevCommandRun(string command, string arguments)
         {
-            var itemSheet = Services.Service.Data.Excel.GetSheet<Item>()!.Where(x => x.ItemAction.Value.Type == 29153 && x.Name.RawString.Contains("Arms") && x.IsUnique);
+            var itemSheet = Svc.Data.Excel.GetSheet<Item>()!.Where(x => x.ItemAction.Value.Type == 29153 && x.Name.RawString.Contains("Arms") && x.IsUnique);
 
             foreach (var item in itemSheet)
             {
@@ -50,8 +50,8 @@ namespace LazyLoot.Commands
                     var text2 = pageDocument.DocumentNode
                         .SelectSingleNode("(//div[contains(@class,'mw-parser-output')]//ul[2]//li)[2]").InnerText.Replace("&#160;", string.Empty).Trim();
 
-                    var itemResult = Services.Service.Data.Excel.GetSheet<Item>()!.First(x => x.Name == text);
-                    var itemResult2 = Services.Service.Data.Excel.GetSheet<Item>()!.First(x => x.Name == text2);
+                    var itemResult = Svc.Data.Excel.GetSheet<Item>()!.First(x => x.Name == text);
+                    var itemResult2 = Svc.Data.Excel.GetSheet<Item>()!.First(x => x.Name == text2);
 
                     PluginLog.Error($"{itemResult.Name}");
                     PluginLog.Error($"{itemResult2.Name}");

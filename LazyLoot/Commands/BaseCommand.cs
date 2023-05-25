@@ -1,6 +1,6 @@
 ﻿using Dalamud.Game.Command;
+using ECommons.DalamudServices;
 using LazyLoot.Attributes;
-using LazyLoot.Services;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -24,9 +24,9 @@ namespace LazyLoot.Commands
                 if (attr == null || Delegate.CreateDelegate(typeof(CommandInfo.HandlerDelegate), this, methodInfo, false) == null)
                     continue;
 
-                if (!Service.CommandManager.Commands.ContainsKey(attr.Command))
+                if (!Svc.Commands.Commands.ContainsKey(attr.Command))
                 {
-                    Service.CommandManager.AddHandler(attr.Command, new CommandInfo((string command, string argument) => // HandlerDelegate
+                    Svc.Commands.AddHandler(attr.Command, new CommandInfo((string command, string argument) => // HandlerDelegate
                     {
                         methodInfo.Invoke(this, new string[] { command, argument });
                     })
@@ -49,9 +49,9 @@ namespace LazyLoot.Commands
                 if (attr == null || Delegate.CreateDelegate(typeof(CommandInfo.HandlerDelegate), this, methodInfo, false) == null)
                     continue;
 
-                if (Service.CommandManager.Commands.ContainsKey(attr.Command))
+                if (Svc.Commands.Commands.ContainsKey(attr.Command))
                 {
-                    Service.CommandManager.RemoveHandler(attr.Command);
+                    Svc.Commands.RemoveHandler(attr.Command);
                 }
             }
         }

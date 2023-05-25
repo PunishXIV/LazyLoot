@@ -1,8 +1,9 @@
 using Dalamud.Interface.Colors;
 using Dalamud.Interface.Internal.Notifications;
 using Dalamud.Interface.Windowing;
+using ECommons.DalamudServices;
 using ImGuiNET;
-using LazyLoot.Services;
+using LazyLoot.Plugin;
 using System;
 using System.Numerics;
 
@@ -22,12 +23,12 @@ namespace LazyLoot.Ui
                 MaximumSize = new Vector2(99999, 99999),
             };
             windowSystem.AddWindow(this);
-            Service.PluginInterface.UiBuilder.Draw += windowSystem.Draw;
+            Svc.PluginInterface.UiBuilder.Draw += windowSystem.Draw;
         }
 
         public void Dispose()
         {
-            Service.PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
+            Svc.PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
             GC.SuppressFinalize(this);
         }
 
@@ -60,7 +61,7 @@ namespace LazyLoot.Ui
 
                 if (ImGui.BeginTabItem("About"))
                 {
-                    PunishLib.ImGuiMethods.AboutTab.Draw(P);
+                    PunishLib.ImGuiMethods.AboutTab.Draw(Plugin.LazyLoot.P);
                     ImGui.EndTabItem();
                 }
 
@@ -71,7 +72,7 @@ namespace LazyLoot.Ui
         public override void OnClose()
         {
             Plugin.LazyLoot.config.Save();
-            Service.PluginInterface.UiBuilder.AddNotification("Configuration saved", "Lazy Loot", NotificationType.Success);
+            Svc.PluginInterface.UiBuilder.AddNotification("Configuration saved", "Lazy Loot", NotificationType.Success);
             base.OnClose();
         }
 

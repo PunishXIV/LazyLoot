@@ -3,11 +3,11 @@ using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Logging;
 using Dalamud.Utility;
+using ECommons.DalamudServices;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Component.Exd;
 using LazyLoot.Attributes;
-using LazyLoot.Services;
 using LazyLoot.Util;
 using Lumina.Excel.GeneratedSheets;
 using System;
@@ -32,8 +32,8 @@ namespace LazyLoot.Commands
 
         public override void Initialize()
         {
-            lootsAddr = Service.SigScanner.GetStaticAddressFromSig("48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 89 44 24 60", 0);
-            rollItemRaw = Marshal.GetDelegateForFunctionPointer<RollItemRaw>(Service.SigScanner.ScanText("41 83 F8 ?? 0F 83 ?? ?? ?? ?? 48 89 5C 24 08"));
+            lootsAddr = Svc.SigScanner.GetStaticAddressFromSig("48 8D 0D ?? ?? ?? ?? E8 ?? ?? ?? ?? 89 44 24 60", 0);
+            rollItemRaw = Marshal.GetDelegateForFunctionPointer<RollItemRaw>(Svc.SigScanner.ScanText("41 83 F8 ?? 0F 83 ?? ?? ?? ?? 48 89 5C 24 08"));
             base.Initialize();
         }
 
@@ -50,7 +50,7 @@ namespace LazyLoot.Commands
             {
                 if (Plugin.LazyLoot.config.EnableToastMessage)
                 {
-                    Service.ToastGui.ShowError(">>No new loot<<");
+                    Svc.Toasts.ShowError(">>No new loot<<");
                 }
                 isRolling = false;
                 return;
@@ -75,7 +75,7 @@ namespace LazyLoot.Commands
                     if (itemInfo.ItemId is 0) continue;
                     lastItem = itemInfo.ItemId;
                     LogBeforeRoll(item.Index, itemInfo);
-                    var itemData = Service.Data.GetExcelSheet<Item>()!.GetRow(itemInfo.ItemId);
+                    var itemData = Svc.Data.GetExcelSheet<Item>()!.GetRow(itemInfo.ItemId);
                     if (itemData is null) continue;
                     PluginLog.LogInformation(string.Format($"Item Data : {itemData.Name} : Row {itemData.ItemAction.Row} : ILvl = {itemData.LevelItem.Row} :  Type = {itemData.ItemAction.Value.Type} : IsUnique = {itemData.IsUnique} : IsUntradable = {itemData.IsUntradable} : Unlocked = {GetItemUnlockedAction(itemInfo)}"));
 
@@ -93,7 +93,7 @@ namespace LazyLoot.Commands
                         PluginLog.Error("Crap");
                     }
 
-                    if (Service.Condition[ConditionFlag.BoundByDuty])
+                    if (Svc.Condition[ConditionFlag.BoundByDuty])
                     {
                         await RollItemAsync(rollItem.RollOption, rollItem.Index);
 
@@ -151,7 +151,7 @@ namespace LazyLoot.Commands
 
             if (Plugin.LazyLoot.config.EnableChatLogMessage)
             {
-                Service.ChatGui.Print(seString);
+                Svc.Chat.Print(seString);
             }
 
             if (Plugin.LazyLoot.config.EnableToastMessage)
@@ -167,7 +167,7 @@ namespace LazyLoot.Commands
 
             for (int index = items.Count - 1; index >= 0; index--)
             {
-                var itemData = Service.Data.GetExcelSheet<Item>()!.GetRow(items[index].ItemId);
+                var itemData = Svc.Data.GetExcelSheet<Item>()!.GetRow(items[index].ItemId);
 
                 if (!items[index].Rolled && itemData.ItemAction.Value.Type != 29153)
                 {
@@ -176,7 +176,7 @@ namespace LazyLoot.Commands
 
                 if (itemData.ItemAction.Value.Type == 29153)
                 {
-                    Service.ToastGui.ShowError("Paladin's/Gladiator Arms detected, please roll them manual.");
+                    Svc.Toasts.ShowError("Paladin's/Gladiator Arms detected, please roll them manual.");
                 }
             }
 
@@ -342,15 +342,15 @@ namespace LazyLoot.Commands
         {
             if (Plugin.LazyLoot.config.EnableNormalToast)
             {
-                Service.ToastGui.ShowNormal(seString);
+                Svc.Toasts.ShowNormal(seString);
             }
             else if (Plugin.LazyLoot.config.EnableQuestToast)
             {
-                Service.ToastGui.ShowQuest(seString);
+                Svc.Toasts.ShowQuest(seString);
             }
             else if (Plugin.LazyLoot.config.EnableErrorToast)
             {
-                Service.ToastGui.ShowError(seString);
+                Svc.Toasts.ShowError(seString);
             }
         }
     }

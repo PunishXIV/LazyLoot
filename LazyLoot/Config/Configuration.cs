@@ -1,5 +1,6 @@
 ﻿using Dalamud.Configuration;
 using Dalamud.Plugin;
+using ECommons.DalamudServices;
 using Newtonsoft.Json;
 
 namespace LazyLoot.Config
@@ -49,14 +50,8 @@ namespace LazyLoot.Config
         // Items i can't use with actuall class
         public bool RestrictionOtherJobItems = false;
 
-
-        [JsonIgnore]
-        private DalamudPluginInterface pluginInterface;
-
         public int Version { get; set; }
 
-        public void Initialize(DalamudPluginInterface pluginInterface) => this.pluginInterface = pluginInterface;
-
-        public void Save() => pluginInterface.SavePluginConfig(this);
+        public void Save() => Svc.PluginInterface.SavePluginConfig(this);
     }
 }

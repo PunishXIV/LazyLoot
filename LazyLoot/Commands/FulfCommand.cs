@@ -4,8 +4,8 @@ using Dalamud.Game.Gui.Toast;
 using Dalamud.Game.Text;
 using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Interface.Internal.Notifications;
+using ECommons.DalamudServices;
 using LazyLoot.Attributes;
-using LazyLoot.Services;
 
 namespace LazyLoot.Commands
 {
@@ -22,18 +22,18 @@ namespace LazyLoot.Commands
 
                 if (Plugin.LazyLoot.FulfEnabled)
                 {
-                    Service.ToastGui.ShowQuest("FULF enabled", new QuestToastOptions() { DisplayCheckmark = true, PlaySound = true });
-                    Service.ChatGui.CheckMessageHandled += NoticeLoot;
+                    Svc.Toasts.ShowQuest("FULF enabled", new QuestToastOptions() { DisplayCheckmark = true, PlaySound = true });
+                    Svc.Chat.CheckMessageHandled += NoticeLoot;
                     SetRollOption(subArguments[0]);
-                    if (Service.Condition[ConditionFlag.BoundByDuty])
+                    if (Svc.Condition[ConditionFlag.BoundByDuty])
                     {
                         Roll(string.Empty, SetFulfArguments());
                     }
                 }
                 else
                 {
-                    Service.ToastGui.ShowQuest("FULF disabled", new QuestToastOptions() { DisplayCheckmark = true, PlaySound = true });
-                    Service.ChatGui.CheckMessageHandled -= NoticeLoot;
+                    Svc.Toasts.ShowQuest("FULF disabled", new QuestToastOptions() { DisplayCheckmark = true, PlaySound = true });
+                    Svc.Chat.CheckMessageHandled -= NoticeLoot;
                 }
             }
 
@@ -47,7 +47,7 @@ namespace LazyLoot.Commands
         {
             if (!disposing)
                 return;
-            Service.ChatGui.CheckMessageHandled -= NoticeLoot;
+            Svc.Chat.CheckMessageHandled -= NoticeLoot;
             base.Dispose(disposing);
         }
 
@@ -55,7 +55,7 @@ namespace LazyLoot.Commands
         {
             if (isRolling) return;
             if ((ushort)type != 2105) return;
-            if (message.TextValue == Service.ClientState.ClientLanguage switch
+            if (message.TextValue == Svc.ClientState.ClientLanguage switch
             {
                 ClientLanguage.German => "Bitte um das Beutegut würfeln.",
                 ClientLanguage.French => "Veuillez lancer les dés pour le butin.",
@@ -63,7 +63,7 @@ namespace LazyLoot.Commands
                 _ => "Cast your lot."
             })
             {
-                Service.PluginInterface.UiBuilder.AddNotification(">>New Loot<<", "Lazy Loot", NotificationType.Info);
+                Svc.PluginInterface.UiBuilder.AddNotification(">>New Loot<<", "Lazy Loot", NotificationType.Info);
                 Roll(string.Empty, SetFulfArguments());
             }
         }
