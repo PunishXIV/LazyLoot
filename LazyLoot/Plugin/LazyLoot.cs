@@ -30,7 +30,7 @@ namespace LazyLoot.Plugin
             pluginInterface.Create<Service>();
             P = this;
             ECommonsMain.Init(pluginInterface, this, ECommons.Module.All);
-            PunishLibMain.Init(pluginInterface, this);
+            PunishLibMain.Init(pluginInterface, this, new AboutPlugin() { Developer = "53m1k0l0n/Gidedin" });
 
             config = Service.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
             config.Initialize(Service.PluginInterface);
