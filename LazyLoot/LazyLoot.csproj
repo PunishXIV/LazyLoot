@@ -2,7 +2,7 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
 	<PropertyGroup>
-		<Authors>53m1k0l0n</Authors>
+		<Authors>53m1k0l0n/Gidedin</Authors>
 		<Version>5.0.9.4</Version>
 		<Description>LazyLoot plugin.</Description>
 	</PropertyGroup>

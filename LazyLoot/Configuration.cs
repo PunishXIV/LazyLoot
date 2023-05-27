@@ -44,6 +44,8 @@ namespace LazyLoot
         public bool RestrictionIgnoreFadedCopy = false;
         // Items i can't use with actuall class
         public bool RestrictionOtherJobItems = false;
+        // Weekly lockout items
+        public bool RestrictionWeeklyLockoutItems = false;
 
         public int Version { get; set; }
 

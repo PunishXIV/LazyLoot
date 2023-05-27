@@ -80,7 +80,7 @@ public class ConfigUi : Window, IDisposable
     {
         ImGui.Text("/rolling need");
         ImGui.SameLine();
-        ImGui.Text("Roll need for everything. If impossible roll greed or pass if greed is impossible.");
+        ImGui.Text("Roll need for everything. If impossible, roll greed (or pass if greed is impossible).");
         ImGui.Separator();
         ImGui.Text("/rolling needonly");
         ImGui.SameLine();
@@ -96,7 +96,7 @@ public class ConfigUi : Window, IDisposable
         ImGui.Separator();
         ImGui.Text("/rolling passall");
         ImGui.SameLine();
-        ImGui.Text("Passes on all, even if you rolled on them previously.");
+        ImGui.Text("Pass on all, even if you rolled on them previously.");
         ImGui.Separator();
     }
 
@@ -115,12 +115,12 @@ public class ConfigUi : Window, IDisposable
     private static void DrawUserRestriction()
     {
         ImGui.Separator();
-        ImGui.Checkbox("Ignore item Level below:", ref LazyLoot.Config.RestrictionIgnoreItemLevelBelow);
+        ImGui.Checkbox("Pass on items with an item level below:", ref LazyLoot.Config.RestrictionIgnoreItemLevelBelow);
         if (LazyLoot.Config.RestrictionIgnoreItemLevelBelow)
         {
             ImGui.SameLine();
             ImGui.SetNextItemWidth(100);
-            ImGui.DragInt("ILvl", ref LazyLoot.Config.RestrictionIgnoreItemLevelBelowValue);
+            ImGui.DragInt("###ILVL", ref LazyLoot.Config.RestrictionIgnoreItemLevelBelowValue);
 
             if (LazyLoot.Config.RestrictionIgnoreItemLevelBelowValue < 0)
             {
@@ -128,21 +128,23 @@ public class ConfigUi : Window, IDisposable
             }
         }
 
-        ImGui.TextColored(ImGuiColors.DalamudRed, "Ignore items even if they are tradeable, do you want to trade them, don't ignore them.");
-        ImGui.Checkbox("Ignore all items already unlocked. ( Cards, Music, Faded copy, Minions, Mounts, Emotes, Hairstyle )", ref LazyLoot.Config.RestrictionIgnoreItemUnlocked);
+        ImGui.TextColored(ImGuiColors.DalamudRed, "Passes on items even if they are tradeable.");
+        ImGui.Checkbox("Pass on all items already unlocked. (Triple Triad Cards, Orchestrions, Faded Copies, Minions, Mounts, Emotes, Hairstyles)", ref LazyLoot.Config.RestrictionIgnoreItemUnlocked);
 
         if (!LazyLoot.Config.RestrictionIgnoreItemUnlocked)
         {
-            ImGui.Checkbox("Ignore unlocked mounts.", ref LazyLoot.Config.RestrictionIgnoreMounts);
-            ImGui.Checkbox("Ignore unlocked minions.", ref LazyLoot.Config.RestrictionIgnoreMinions);
-            ImGui.Checkbox("Ignore unlocked bardings.", ref LazyLoot.Config.RestrictionIgnoreBardings);
-            ImGui.Checkbox("Ignore unlocked triple triad cards.", ref LazyLoot.Config.RestrictionIgnoreTripleTriadCards);
-            ImGui.Checkbox("Ignore unlocked emotes and hairstyle.", ref LazyLoot.Config.RestrictionIgnoreEmoteHairstyle);
-            ImGui.Checkbox("Ignore unlocked orchestrion rolls.", ref LazyLoot.Config.RestrictionIgnoreOrchestrionRolls);
-            ImGui.Checkbox("Ignore unlocked Faded Copy.", ref LazyLoot.Config.RestrictionIgnoreFadedCopy);
+            ImGui.Checkbox("Pass on unlocked Mounts.", ref LazyLoot.Config.RestrictionIgnoreMounts);
+            ImGui.Checkbox("Pass on unlocked Minions.", ref LazyLoot.Config.RestrictionIgnoreMinions);
+            ImGui.Checkbox("Pass on unlocked Bardings.", ref LazyLoot.Config.RestrictionIgnoreBardings);
+            ImGui.Checkbox("Pass on unlocked Triple Triad cards.", ref LazyLoot.Config.RestrictionIgnoreTripleTriadCards);
+            ImGui.Checkbox("Pass on unlocked Emotes and Hairstyle.", ref LazyLoot.Config.RestrictionIgnoreEmoteHairstyle);
+            ImGui.Checkbox("Pass on unlocked Orchestrion Rolls.", ref LazyLoot.Config.RestrictionIgnoreOrchestrionRolls);
+            ImGui.Checkbox("Pass on unlocked Faded Copies.", ref LazyLoot.Config.RestrictionIgnoreFadedCopy);
         }
 
-        ImGui.Checkbox("Ignore items I can't use with atcual job.", ref LazyLoot.Config.RestrictionOtherJobItems);
+        ImGui.Checkbox("Pass on items I can't use with current job.", ref LazyLoot.Config.RestrictionOtherJobItems);
+
+        ImGui.Checkbox("Don't roll on items with a weekly lockout.", ref LazyLoot.Config.RestrictionWeeklyLockoutItems);
     }
 
     private void DrawChatAndToast()
@@ -156,7 +158,7 @@ public class ConfigUi : Window, IDisposable
 
     private void DrawFulf()
     {
-        ImGui.Text("Fancy Ultimate Lazy Feature. Enable or Disable with /fulf  (Not persistent).");
+        ImGui.Text("Fancy Ultimate Lazy Feature. Enable or Disable with /fulf.");
         ImGui.TextColored(LazyLoot.Config.FulfEnabled ? ImGuiColors.HealerGreen : ImGuiColors.DalamudRed, "FULF");
 
         ImGui.Text("Options are persistent");
@@ -174,7 +176,7 @@ public class ConfigUi : Window, IDisposable
 
         ImGui.Text("First Roll Delay Range (In seconds)");
         ImGui.SetNextItemWidth(100);
-        ImGui.DragFloat("Min in seconds. ", ref LazyLoot.Config.FulfMinRollDelayInSeconds, 0.1F);
+        ImGui.DragFloat("Minimum Delay in seconds. ", ref LazyLoot.Config.FulfMinRollDelayInSeconds, 0.1F);
 
         if (LazyLoot.Config.FulfMinRollDelayInSeconds >= LazyLoot.Config.FulfMaxRollDelayInSeconds)
         {
@@ -187,7 +189,7 @@ public class ConfigUi : Window, IDisposable
         }
 
         ImGui.SetNextItemWidth(100);
-        ImGui.DragFloat("Max in seconds. ", ref LazyLoot.Config.FulfMaxRollDelayInSeconds, 0.1F);
+        ImGui.DragFloat("Maximum Delay in seconds. ", ref LazyLoot.Config.FulfMaxRollDelayInSeconds, 0.1F);
 
         if (LazyLoot.Config.FulfMaxRollDelayInSeconds <= LazyLoot.Config.FulfMinRollDelayInSeconds)
         {

@@ -32,7 +32,7 @@ internal static class Roller
 
         if (_itemId == loot.ItemId && index == _index)
         {
-            PluginLog.Warning($"Item [{loot.ItemId}] roll {option} failed, please contract to the author. Or lower you delay.");
+            PluginLog.Warning($"Item [{loot.ItemId}] roll {option} failed, please contract to the author or lower your delay.");
             switch (option)
             {
                 case RollResult.Needed:
@@ -69,6 +69,7 @@ internal static class Roller
 
     private static RollResult GetRestrictResult(LootItem loot)
     {
+        //Checks what the max possible roll type on the item is
         var stateMax = loot.RollState switch
         {
             RollState.UpToNeed => RollResult.Needed,
@@ -76,6 +77,7 @@ internal static class Roller
             _ => RollResult.Passed,
         };
 
+        //Checks what the player set loot rules are
         var ruleMax = loot.LootMode switch
         {
             LootMode.Normal => RollResult.Needed,
@@ -84,7 +86,7 @@ internal static class Roller
         };
         return ResultMerge(stateMax, ruleMax);
     }
-    private static RollResult GetPlayerRestrict(LootItem loot)
+    private unsafe static RollResult GetPlayerRestrict(LootItem loot)
     {
         var item = Svc.Data.GetExcelSheet<Item>().GetRow(loot.ItemId);
         if (item == null) return RollResult.Passed;
@@ -188,6 +190,21 @@ internal static class Roller
             if (loot.RollState is RollState.Rolled or RollState.Unavailable or RollState.Unknown) continue;
             if (loot.ItemId == 0) continue;
             if (loot.LootMode is LootMode.LootMasterGreedOnly or LootMode.Unavailable) continue;
+            if (LazyLoot.Config.RestrictionWeeklyLockoutItems)
+            {
+                var contentFinderInfo = Svc.Data.GetExcelSheet<ContentFinderCondition>().GetRow(GameMain.Instance()->CurrentContentFinderConditionId);
+                var instanceInfo = Svc.Data.GetExcelSheet<InstanceContent>().GetRow(contentFinderInfo.Content);
+
+                if (instanceInfo.WeekRestriction == 1)
+                {
+                    var item = Svc.Data.GetExcelSheet<Item>().GetRow(loot.ItemId);
+                    if (item.EquipSlotCategory.Row != 0 || item.ItemUICategory.Row == 61)
+                    {
+                        continue;
+                    }
+                }
+            }
+
 
             return true;
         }

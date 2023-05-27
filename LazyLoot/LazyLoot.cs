@@ -12,9 +12,11 @@ using ECommons;
 using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
+using Lumina.Excel.GeneratedSheets;
 using PunishLib;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace LazyLoot;
 
@@ -37,7 +39,7 @@ public class LazyLoot : IDalamudPlugin, IDisposable
     public LazyLoot(DalamudPluginInterface pluginInterface)
     {
         ECommonsMain.Init(pluginInterface, this);
-        PunishLibMain.Init(pluginInterface, this);
+        PunishLibMain.Init(pluginInterface, this, new AboutPlugin() { Developer = "53m1k0l0n/Gidedin" });
         P = this;
 
         Config = Svc.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
@@ -55,13 +57,13 @@ public class LazyLoot : IDalamudPlugin, IDisposable
 
         Svc.Commands.AddHandler("/fulf", new CommandInfo(FulfCommand)
         {
-            HelpMessage = "En/Disable FULF with /fulf or change the loot rule with /fulf need | greed or pass .",
+            HelpMessage = "Enable/Disable FULF with /fulf or change the loot rule with /fulf need | greed | pass.",
             ShowInHelp = true,
         });
 
         Svc.Commands.AddHandler("/rolling", new CommandInfo(RollingCommand)
         {
-            HelpMessage = "Roll for the loot according to the argument and the item's RollResult. /rolling need | greed | pass or passall",
+            HelpMessage = "Roll for the loot according to the argument and the item's RollResult. /rolling need | greed | pass | passall",
             ShowInHelp = true,
         });
 
@@ -143,9 +145,16 @@ public class LazyLoot : IDalamudPlugin, IDisposable
     {
         if (Config.FulfEnabled)
         {
+            string fulfMode = _rollArray[Config.FulfRoll % 3] switch
+            {
+                RollResult.Needed => "Needing",
+                RollResult.Greeded => "Greeding",
+                RollResult.Passed => "Passing"
+            };
+
             DtrEntry.Text = new SeString(
                 new IconPayload(BitmapFontIcon.Dice),
-                new TextPayload(_rollArray[Config.FulfRoll % 3].ToString())
+                new TextPayload(fulfMode)
                 );
             DtrEntry.Shown = true;
         }
@@ -231,13 +240,7 @@ public class LazyLoot : IDalamudPlugin, IDisposable
         if (!Config.FulfEnabled || type != (XivChatType)2105) return;
 
         string textValue = message.TextValue;
-        if (textValue == Svc.ClientState.ClientLanguage switch
-        {
-            ClientLanguage.German => "Bitte um das Beutegut würfeln.",
-            ClientLanguage.French => "Veuillez lancer les dés pour le butin.",
-            ClientLanguage.Japanese => "ロットを行ってください。",
-            _ => "Cast your lot.",
-        })
+        if (textValue == Svc.Data.GetExcelSheet<LogMessage>()!.First(x => x.RowId == 5194).Text)
         {
             Notify.Info(">>New Loot<<");
 
