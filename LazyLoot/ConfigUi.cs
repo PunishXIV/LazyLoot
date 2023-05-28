@@ -1,4 +1,6 @@
+using Dalamud.Interface;
 using Dalamud.Interface.Colors;
+using Dalamud.Interface.Components;
 using Dalamud.Interface.Windowing;
 using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
@@ -78,30 +80,28 @@ public class ConfigUi : Window, IDisposable
 
     private static void DrawFeatures()
     {
-        ImGui.Text("/rolling need");
-        ImGui.SameLine();
+        ImGuiEx.ImGuiLineCentered("FeaturesLabel", () => ImGuiEx.TextUnderlined("LazyLoot Rolling Commands"));
+        ImGuiComponents.HelpMarker("These work the same as /rolling currently. However /rolling will be removed in the next update. Please update any macros you have to the new command.");
+        ImGui.Columns(2, null, false);
+        ImGui.SetColumnWidth(0, 80);
+        ImGui.Text("/lazy need");
+        ImGui.NextColumn();
         ImGui.Text("Roll need for everything. If impossible, roll greed (or pass if greed is impossible).");
-        ImGui.Separator();
-        ImGui.Text("/rolling needonly");
-        ImGui.SameLine();
-        ImGui.Text("Roll need for everything. If impossible, roll pass.");
-        ImGui.Separator();
-        ImGui.Text("/rolling greed");
-        ImGui.SameLine();
+        ImGui.NextColumn();
+        ImGui.Text("/lazy greed");
+        ImGui.NextColumn();
         ImGui.Text("Roll greed for everything. If impossible, roll pass.");
-        ImGui.Separator();
-        ImGui.Text("/rolling pass");
-        ImGui.SameLine();
+        ImGui.NextColumn();
+        ImGui.Text("/lazy pass");
+        ImGui.NextColumn();
         ImGui.Text("Pass on things you haven't rolled for yet.");
-        ImGui.Separator();
-        ImGui.Text("/rolling passall");
-        ImGui.SameLine();
-        ImGui.Text("Pass on all, even if you rolled on them previously.");
-        ImGui.Separator();
+        ImGui.NextColumn();
+        ImGui.Columns(1);
     }
 
     private static void DrawRollingDelay()
     {
+        ImGuiEx.ImGuiLineCentered("RollingDelayLabel", () => ImGuiEx.TextUnderlined("Rolling Command Delay"));
         ImGui.SetNextItemWidth(100);
 
         if(ImGui.DragFloatRange2("Rolling delay between items", ref LazyLoot.Config.MinRollDelayInSeconds, ref LazyLoot.Config.MaxRollDelayInSeconds, 0.1f))
@@ -149,18 +149,25 @@ public class ConfigUi : Window, IDisposable
 
     private void DrawChatAndToast()
     {
+        ImGuiEx.ImGuiLineCentered("ChatInfoLabel", () => ImGuiEx.TextUnderlined("Roll Result Information"));
         ImGui.Checkbox("Display roll information in chat.", ref LazyLoot.Config.EnableChatLogMessage);
-
+        ImGui.Spacing();
+        ImGuiEx.ImGuiLineCentered("ToastLabel", () => ImGuiEx.TextUnderlined("Display as Toasts"));
+        ImGuiComponents.HelpMarker("Show your roll information as a pop-up toast, using the various styles below.");
         ImGui.Checkbox("Quest", ref LazyLoot.Config.EnableQuestToast);
+        ImGui.SameLine();
         ImGui.Checkbox("Normal", ref LazyLoot.Config.EnableNormalToast);
+        ImGui.SameLine();
         ImGui.Checkbox("Error", ref LazyLoot.Config.EnableErrorToast);
     }
 
     private void DrawFulf()
     {
-        ImGui.Text("Fancy Ultimate Lazy Feature. Enable or Disable with /fulf.");
+        ImGuiEx.ImGuiLineCentered("FULFLabel", () => ImGuiEx.TextUnderlined("Fancy Ultimate Lazy Feature"));
+
+        ImGui.TextWrapped($"Fancy Ultimate Lazy Feature (FULF) is a set and forget feature that will automatically roll on items for you instead of having to use the commands above.");
         ImGui.Checkbox($"Enable FULF", ref LazyLoot.Config.FulfEnabled);
-        ImGui.TextColored(LazyLoot.Config.FulfEnabled ? ImGuiColors.HealerGreen : ImGuiColors.DalamudRed, "FULF");
+        ImGui.TextColored(LazyLoot.Config.FulfEnabled ? ImGuiColors.HealerGreen : ImGuiColors.DalamudRed, LazyLoot.Config.FulfEnabled ? "FULF Enabled" : "FULF Disabled");
 
         ImGui.Text("Options are persistent");
 

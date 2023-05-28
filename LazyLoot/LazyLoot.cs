@@ -49,9 +49,9 @@ public class LazyLoot : IDalamudPlugin, IDisposable
         Svc.PluginInterface.UiBuilder.OpenConfigUi += OnOpenConfigUi;
         Svc.Chat.CheckMessageHandled += NoticeLoot;
 
-        Svc.Commands.AddHandler("/lazy", new CommandInfo((c, a) => OnOpenConfigUi())
+        Svc.Commands.AddHandler("/lazy", new CommandInfo(LazyCommand)
         {
-            HelpMessage = "Open Lazy Loot config.",
+            HelpMessage = "Open Lazy Loot config by default. Add need | greed | pass to roll on current items.",
             ShowInHelp = true,
         });
 
@@ -63,11 +63,26 @@ public class LazyLoot : IDalamudPlugin, IDisposable
 
         Svc.Commands.AddHandler("/rolling", new CommandInfo(RollingCommand)
         {
-            HelpMessage = "Roll for the loot according to the argument and the item's RollResult. /rolling need | greed | pass | passall",
+            HelpMessage = "[Obsolete, use /lazy] Roll for the loot according to the argument and the item's RollResult. /rolling need | greed | pass",
             ShowInHelp = true,
         });
 
         Svc.Framework.Update += OnFrameworkUpdate;
+    }
+
+    private void LazyCommand(string command, string arguments)
+    {
+        var args = arguments.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+        if (args.Length == 0)
+        {
+            OnOpenConfigUi();
+            return;
+        }
+        else
+        {
+            RollingCommand(null, arguments);
+            return;
+        }
     }
 
     public void Dispose()
