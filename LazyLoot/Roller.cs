@@ -8,6 +8,7 @@ using FFXIVClientStructs.FFXIV.Component.Exd;
 using Lumina.Excel.GeneratedSheets;
 using System;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Runtime.InteropServices;
 
 namespace LazyLoot;
@@ -198,7 +199,13 @@ internal static class Roller
                 if (instanceInfo.WeekRestriction == 1)
                 {
                     var item = Svc.Data.GetExcelSheet<Item>().GetRow(loot.ItemId);
-                    if (item.EquipSlotCategory.Row != 0 || item.ItemUICategory.Row == 61)
+
+                    if (item.ItemAction?.Value.Type != 853 && 
+                        item.ItemAction?.Value.Type != 1013 && 
+                        item.ItemAction?.Value.Type != 2633 && 
+                        item.ItemAction?.Value.Type != 3357 &&
+                        item.ItemAction?.Value.Type != 25183 &&
+                        item.Icon != 25958)
                     {
                         continue;
                     }

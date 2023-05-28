@@ -159,6 +159,7 @@ public class ConfigUi : Window, IDisposable
     private void DrawFulf()
     {
         ImGui.Text("Fancy Ultimate Lazy Feature. Enable or Disable with /fulf.");
+        ImGui.Checkbox($"Enable FULF", ref LazyLoot.Config.FulfEnabled);
         ImGui.TextColored(LazyLoot.Config.FulfEnabled ? ImGuiColors.HealerGreen : ImGuiColors.DalamudRed, "FULF");
 
         ImGui.Text("Options are persistent");
