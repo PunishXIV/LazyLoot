@@ -1,30 +1,26 @@
 ﻿using Dalamud.Configuration;
-using Dalamud.Plugin;
-using Newtonsoft.Json;
+using ECommons.DalamudServices;
 
-namespace LazyLoot.Config
+namespace LazyLoot
 {
     public class Configuration : IPluginConfiguration
     {
+        public bool FulfEnabled = false;
+
         // Output
         public bool EnableChatLogMessage = true;
-        public bool EnableToastMessage = true;
         public bool EnableErrorToast = false;
         public bool EnableNormalToast = false;
         public bool EnableQuestToast = true;
 
         // FulfRollOption
-        public bool EnableGreedRoll = false;
-        public bool EnableNeedOnlyRoll = false;
-        public bool EnableNeedRoll = true;
-        public bool EnablePassRoll = false;
+        public int FulfRoll = 0;
 
         // RollDelay
-        public bool EnableRollDelay = true;
         public float MinRollDelayInSeconds = 0.5f;
         public float MaxRollDelayInSeconds = 1f;
-        public float FulfInitialRollDelayInSeconds = 1.5f;
-        public float FulfFinalRollDelayInSeconds = 3f;
+        public float FulfMinRollDelayInSeconds = 1.5f;
+        public float FulfMaxRollDelayInSeconds = 3f;
 
         // Restrictions
         // ILvl
@@ -48,15 +44,11 @@ namespace LazyLoot.Config
         public bool RestrictionIgnoreFadedCopy = false;
         // Items i can't use with actuall class
         public bool RestrictionOtherJobItems = false;
-
-
-        [JsonIgnore]
-        private DalamudPluginInterface pluginInterface;
+        // Weekly lockout items
+        public bool RestrictionWeeklyLockoutItems = false;
 
         public int Version { get; set; }
 
-        public void Initialize(DalamudPluginInterface pluginInterface) => this.pluginInterface = pluginInterface;
-
-        public void Save() => pluginInterface.SavePluginConfig(this);
+        public void Save() => Svc.PluginInterface.SavePluginConfig(this);
     }
 }
