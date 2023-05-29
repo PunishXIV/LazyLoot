@@ -8,6 +8,7 @@ using FFXIVClientStructs.FFXIV.Component.Exd;
 using ImGuiScene;
 using Lumina.Excel.GeneratedSheets;
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using System.Reflection.Metadata.Ecma335;
 using System.Runtime.InteropServices;
@@ -148,7 +149,7 @@ internal static class Roller
 
         if (lootItem.EquipSlotCategory.Row != 0)
         {
-
+            // Check if the loot item level is below the average level of the user job
             if (LazyLoot.Config.RestrictionLootLowerThanJobIlvl && loot.RollState == RollState.UpToNeed)
             {
                 if (lootItem.LevelItem.Row < Utils.GetPlayerIlevel() - LazyLoot.Config.RestrictionLootLowerThanJobIlvlTreshold)
@@ -157,29 +158,25 @@ internal static class Roller
                 }
             }
 
+            // Check if the loot item is an actual upgrade to the user (has a higher ilvl)
             if (LazyLoot.Config.RestrictionLootIsJobUpgrade && loot.RollState == RollState.UpToNeed)
             {
                 var lootItemSlot = lootItem.EquipSlotCategory.Row;
-                var shouldRemoveNeedRoll = true;
+                var itemsToVerify = new List<uint>();
                 InventoryContainer* equippedItems = InventoryManager.Instance()->GetInventoryContainer(InventoryType.EquippedItems);
                 for (int i = 0; i < equippedItems->Size; i++)
                 {
                     InventoryItem* equippedItem = equippedItems->GetInventorySlot(i);
-                    if (equippedItem != null && equippedItem->ItemID != 0)
-                    {
-                        Item equippedItemData = Svc.Data.GetExcelSheet<Item>().GetRow(equippedItem->ItemID);
-                        if (equippedItemData == null) break;
-                        if (equippedItemData.EquipSlotCategory.Row != lootItemSlot) continue;
-                        if (lootItem.LevelItem.Row > equippedItemData.LevelItem.Row)
-                        {
-                            shouldRemoveNeedRoll = false;
-                            break;
-                        }
-                    }
+                    Item equippedItemData = Svc.Data.GetExcelSheet<Item>().GetRow(equippedItem->ItemID);
+                    if (equippedItemData == null) continue;
+                    if (equippedItemData.EquipSlotCategory.Row != lootItemSlot) continue;
+                    // We gather all the iLvls of the equipped items in the same slot (if any)
+                    itemsToVerify.Add(equippedItemData.LevelItem.Row);
                 }
-                if (shouldRemoveNeedRoll)
+                // And we check if from the items gathered, if the lowest is higher than the droped item, we follow the rules defined by the user
+                if (itemsToVerify.Count > 0 && itemsToVerify.Min() > lootItem.LevelItem.Row)
                 {
-                    return LazyLoot.Config.RestrictionLootLowerThanJobIlvlRollState == 0 ? RollResult.Greeded : RollResult.Passed;
+                    return LazyLoot.Config.RestrictionLootIsJobUpgradeRollState == 0 ? RollResult.Greeded : RollResult.Passed;
                 }
             }
 
