@@ -5,6 +5,7 @@ using ECommons.GameHelpers;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Component.Exd;
+using ImGuiScene;
 using Lumina.Excel.GeneratedSheets;
 using System;
 using System.Linq;
@@ -89,11 +90,11 @@ internal static class Roller
     }
     private unsafe static RollResult GetPlayerRestrict(LootItem loot)
     {
-        var item = Svc.Data.GetExcelSheet<Item>().GetRow(loot.ItemId);
-        if (item == null) return RollResult.Passed;
+        var lootItem = Svc.Data.GetExcelSheet<Item>().GetRow(loot.ItemId);
+        if (lootItem == null) return RollResult.Passed;
 
         //Unique.
-        if (item.IsUnique && ItemCount(loot.ItemId) > 0) return RollResult.Passed;
+        if (lootItem.IsUnique && ItemCount(loot.ItemId) > 0) return RollResult.Passed;
 
         if (IsItemUnlocked(loot.ItemId))
         {
@@ -102,53 +103,88 @@ internal static class Roller
                 return RollResult.Passed;
             }
 
-            if ((LazyLoot.Config.RestrictionIgnoreMounts || item.IsUnique)
-                && item.ItemAction?.Value.Type == 1322)
+            if ((LazyLoot.Config.RestrictionIgnoreMounts || lootItem.IsUnique)
+                && lootItem.ItemAction?.Value.Type == 1322)
             {
                 return RollResult.Passed;
             }
 
-            if ((LazyLoot.Config.RestrictionIgnoreMinions || item.IsUnique)
-                && item.ItemAction?.Value.Type == 853)
+            if ((LazyLoot.Config.RestrictionIgnoreMinions || lootItem.IsUnique)
+                && lootItem.ItemAction?.Value.Type == 853)
             {
                 return RollResult.Passed;
             }
 
             if (LazyLoot.Config.RestrictionIgnoreBardings
-                && item.ItemAction?.Value.Type == 1013)
+                && lootItem.ItemAction?.Value.Type == 1013)
             {
                 return RollResult.Passed;
             }
 
             if (LazyLoot.Config.RestrictionIgnoreEmoteHairstyle
-                && item.ItemAction?.Value.Type == 2633)
+                && lootItem.ItemAction?.Value.Type == 2633)
             {
                 return RollResult.Passed;
             }
 
             if (LazyLoot.Config.RestrictionIgnoreTripleTriadCards
-                && item.ItemAction?.Value.Type == 3357)
+                && lootItem.ItemAction?.Value.Type == 3357)
             {
                 return RollResult.Passed;
             }
 
             if (LazyLoot.Config.RestrictionIgnoreOrchestrionRolls
-                && item.ItemAction?.Value.Type == 25183)
+                && lootItem.ItemAction?.Value.Type == 25183)
             {
                 return RollResult.Passed;
             }
 
             if (LazyLoot.Config.RestrictionIgnoreFadedCopy
-                && item.Icon == 25958)
+                && lootItem.Icon == 25958)
             {
                 return RollResult.Passed;
             }
         }
 
-        if (item.EquipSlotCategory.Row != 0)
+        if (lootItem.EquipSlotCategory.Row != 0)
         {
+
+            if (LazyLoot.Config.RestrictionLootLowerThanJobIlvl && loot.RollState == RollState.UpToNeed)
+            {
+                if (lootItem.LevelItem.Row < Utils.GetPlayerIlevel() - LazyLoot.Config.RestrictionLootLowerThanJobIlvlTreshold)
+                {
+                    return LazyLoot.Config.RestrictionLootLowerThanJobIlvlRollState == 0 ? RollResult.Greeded : RollResult.Passed;
+                }
+            }
+
+            if (LazyLoot.Config.RestrictionLootIsJobUpgrade && loot.RollState == RollState.UpToNeed)
+            {
+                var lootItemSlot = lootItem.EquipSlotCategory.Row;
+                var shouldRemoveNeedRoll = true;
+                InventoryContainer* equippedItems = InventoryManager.Instance()->GetInventoryContainer(InventoryType.EquippedItems);
+                for (int i = 0; i < equippedItems->Size; i++)
+                {
+                    InventoryItem* equippedItem = equippedItems->GetInventorySlot(i);
+                    if (equippedItem != null && equippedItem->ItemID != 0)
+                    {
+                        Item equippedItemData = Svc.Data.GetExcelSheet<Item>().GetRow(equippedItem->ItemID);
+                        if (equippedItemData == null) break;
+                        if (equippedItemData.EquipSlotCategory.Row != lootItemSlot) continue;
+                        if (lootItem.LevelItem.Row > equippedItemData.LevelItem.Row)
+                        {
+                            shouldRemoveNeedRoll = false;
+                            break;
+                        }
+                    }
+                }
+                if (shouldRemoveNeedRoll)
+                {
+                    return LazyLoot.Config.RestrictionLootLowerThanJobIlvlRollState == 0 ? RollResult.Greeded : RollResult.Passed;
+                }
+            }
+
             if (LazyLoot.Config.RestrictionIgnoreItemLevelBelow
-                && item.LevelItem.Row <= LazyLoot.Config.RestrictionIgnoreItemLevelBelowValue)
+                && lootItem.LevelItem.Row <= LazyLoot.Config.RestrictionIgnoreItemLevelBelowValue)
             {
                 return RollResult.Passed;
             }
@@ -162,7 +198,7 @@ internal static class Roller
 
         //PLD set.
         if (LazyLoot.Config.RestrictionOtherJobItems
-            && item.ItemAction?.Value.Type == 29153
+            && lootItem.ItemAction?.Value.Type == 29153
             && !(Player.Object?.ClassJob?.Id is 1 or 19))
         {
             return RollResult.Passed;
@@ -200,9 +236,9 @@ internal static class Roller
                 {
                     var item = Svc.Data.GetExcelSheet<Item>().GetRow(loot.ItemId);
 
-                    if (item.ItemAction?.Value.Type != 853 && 
-                        item.ItemAction?.Value.Type != 1013 && 
-                        item.ItemAction?.Value.Type != 2633 && 
+                    if (item.ItemAction?.Value.Type != 853 &&
+                        item.ItemAction?.Value.Type != 1013 &&
+                        item.ItemAction?.Value.Type != 2633 &&
                         item.ItemAction?.Value.Type != 3357 &&
                         item.ItemAction?.Value.Type != 25183 &&
                         item.Icon != 25958)

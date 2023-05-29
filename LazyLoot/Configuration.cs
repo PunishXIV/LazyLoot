@@ -46,6 +46,13 @@ namespace LazyLoot
         public bool RestrictionOtherJobItems = false;
         // Weekly lockout items
         public bool RestrictionWeeklyLockoutItems = false;
+        // Loot is below a certain treshhold for the current job ilvl
+        public bool RestrictionLootLowerThanJobIlvl = false;
+        public int RestrictionLootLowerThanJobIlvlTreshold = 30;
+        public int RestrictionLootLowerThanJobIlvlRollState = 1;
+        // Loot is an upgrade to the current job
+        public bool RestrictionLootIsJobUpgrade = false;
+        public int RestrictionLootIsJobUpgradeRollState = 1;
 
         public int Version { get; set; }
 

@@ -81,7 +81,6 @@ public class ConfigUi : Window, IDisposable
     private static void DrawFeatures()
     {
         ImGuiEx.ImGuiLineCentered("FeaturesLabel", () => ImGuiEx.TextUnderlined("LazyLoot Rolling Commands"));
-        ImGuiComponents.HelpMarker("These work the same as /rolling currently. However /rolling will be removed in the next update. Please update any macros you have to the new command.");
         ImGui.Columns(2, null, false);
         ImGui.SetColumnWidth(0, 80);
         ImGui.Text("/lazy need");
@@ -104,7 +103,7 @@ public class ConfigUi : Window, IDisposable
         ImGuiEx.ImGuiLineCentered("RollingDelayLabel", () => ImGuiEx.TextUnderlined("Rolling Command Delay"));
         ImGui.SetNextItemWidth(100);
 
-        if(ImGui.DragFloatRange2("Rolling delay between items", ref LazyLoot.Config.MinRollDelayInSeconds, ref LazyLoot.Config.MaxRollDelayInSeconds, 0.1f))
+        if (ImGui.DragFloatRange2("Rolling delay between items", ref LazyLoot.Config.MinRollDelayInSeconds, ref LazyLoot.Config.MaxRollDelayInSeconds, 0.1f))
         {
             LazyLoot.Config.MinRollDelayInSeconds = Math.Max(LazyLoot.Config.MinRollDelayInSeconds, 0.5f);
 
@@ -114,21 +113,14 @@ public class ConfigUi : Window, IDisposable
 
     private static void DrawUserRestriction()
     {
+        ImGui.Text("Settings in this page will apply to every single item, even if they are tradeable or not.");
         ImGui.Separator();
-        ImGui.Checkbox("Pass on items with an item level below:", ref LazyLoot.Config.RestrictionIgnoreItemLevelBelow);
-        if (LazyLoot.Config.RestrictionIgnoreItemLevelBelow)
-        {
-            ImGui.SameLine();
-            ImGui.SetNextItemWidth(100);
-            ImGui.DragInt("###ILVL", ref LazyLoot.Config.RestrictionIgnoreItemLevelBelowValue);
+        ImGui.Checkbox("Pass on items with an item level below", ref LazyLoot.Config.RestrictionIgnoreItemLevelBelow);
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(50);
+        ImGui.DragInt("###RestrictionIgnoreItemLevelBelowValue", ref LazyLoot.Config.RestrictionIgnoreItemLevelBelowValue);
+        if (LazyLoot.Config.RestrictionIgnoreItemLevelBelowValue < 0) LazyLoot.Config.RestrictionIgnoreItemLevelBelowValue = 0;
 
-            if (LazyLoot.Config.RestrictionIgnoreItemLevelBelowValue < 0)
-            {
-                LazyLoot.Config.RestrictionIgnoreItemLevelBelowValue = 0;
-            }
-        }
-
-        ImGui.TextColored(ImGuiColors.DalamudRed, "Passes on items even if they are tradeable.");
         ImGui.Checkbox("Pass on all items already unlocked. (Triple Triad Cards, Orchestrions, Faded Copies, Minions, Mounts, Emotes, Hairstyles)", ref LazyLoot.Config.RestrictionIgnoreItemUnlocked);
 
         if (!LazyLoot.Config.RestrictionIgnoreItemUnlocked)
@@ -145,6 +137,31 @@ public class ConfigUi : Window, IDisposable
         ImGui.Checkbox("Pass on items I can't use with current job.", ref LazyLoot.Config.RestrictionOtherJobItems);
 
         ImGui.Checkbox("Don't roll on items with a weekly lockout.", ref LazyLoot.Config.RestrictionWeeklyLockoutItems);
+
+        ImGui.Checkbox("###RestrictionWeeklyLockoutItems", ref LazyLoot.Config.RestrictionLootLowerThanJobIlvl);
+        ImGui.SameLine();
+        ImGui.Text("Roll");
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(80);
+        ImGui.Combo("###RestrictionLootLowerThanJobIlvlRollState", ref LazyLoot.Config.RestrictionLootLowerThanJobIlvlRollState, new string[] { "Greed", "Pass" }, 2);
+        ImGui.SameLine();
+        ImGui.Text("on items that are");
+        ImGui.SetNextItemWidth(50);
+        ImGui.SameLine();
+        ImGui.DragInt("###RestrictionLootLowerThanJobIlvlTreshold", ref LazyLoot.Config.RestrictionLootLowerThanJobIlvlTreshold);
+        if (LazyLoot.Config.RestrictionLootLowerThanJobIlvlTreshold < 0) LazyLoot.Config.RestrictionLootLowerThanJobIlvlTreshold = 0;
+        ImGui.SameLine();
+        ImGui.Text($"item levels lower than your current job item level (\u2605 {Utils.GetPlayerIlevel()}).");
+
+        ImGui.Checkbox("###RestrictionLootIsJobUpgrade", ref LazyLoot.Config.RestrictionLootIsJobUpgrade);
+        ImGui.SameLine();
+        ImGui.Text("Roll");
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(80);
+        ImGui.Combo("###RestrictionLootIsJobUpgradeRollState", ref LazyLoot.Config.RestrictionLootIsJobUpgradeRollState, new string[] { "Greed", "Pass" }, 2);
+        ImGui.SameLine();
+        ImGui.Text($"on items if the current equipped item of the same type has a higher item level.");
+
     }
 
     private void DrawChatAndToast()
@@ -166,18 +183,30 @@ public class ConfigUi : Window, IDisposable
         ImGuiEx.ImGuiLineCentered("FULFLabel", () => ImGuiEx.TextUnderlined("Fancy Ultimate Lazy Feature"));
 
         ImGui.TextWrapped($"Fancy Ultimate Lazy Feature (FULF) is a set and forget feature that will automatically roll on items for you instead of having to use the commands above.");
-        ImGui.Checkbox($"Enable FULF", ref LazyLoot.Config.FulfEnabled);
+        ImGui.Separator();
+        ImGui.Columns(2, null, false);
+        ImGui.SetColumnWidth(0, 80);
+        ImGui.Text("/fulf need");
+        ImGui.NextColumn();
+        ImGui.Text("Set FULF to Needing mode, where it will follow the /lazy need rules.");
+        ImGui.NextColumn();
+        ImGui.Text("/fulf greed");
+        ImGui.NextColumn();
+        ImGui.Text("Set FULF to Greeding mode, where it will follow the /lazy greed rules.");
+        ImGui.NextColumn();
+        ImGui.Text("/fulf pass");
+        ImGui.NextColumn();
+        ImGui.Text("Set FULF to Passing mode, where it will follow the /lazy pass rules.");
+        ImGui.NextColumn();
+        ImGui.Columns(1);
+        ImGui.Separator();
+        ImGui.Checkbox("###FulfEnabled", ref LazyLoot.Config.FulfEnabled);
+        ImGui.SameLine();
         ImGui.TextColored(LazyLoot.Config.FulfEnabled ? ImGuiColors.HealerGreen : ImGuiColors.DalamudRed, LazyLoot.Config.FulfEnabled ? "FULF Enabled" : "FULF Disabled");
 
-        ImGui.Text("Options are persistent");
-
         ImGui.SetNextItemWidth(100);
-        if (ImGui.Combo("Roll options", ref LazyLoot.Config.FulfRoll, new string[]
-        {
-        "Need",
-        "Greed",
-        "Pass",
-        }, 3))
+
+        if (ImGui.Combo("Roll options", ref LazyLoot.Config.FulfRoll, new string[] { "Need", "Greed", "Pass" }, 3))
         {
             LazyLoot.Config.Save();
         }

@@ -61,12 +61,6 @@ public class LazyLoot : IDalamudPlugin, IDisposable
             ShowInHelp = true,
         });
 
-        Svc.Commands.AddHandler("/rolling", new CommandInfo(RollingCommand)
-        {
-            HelpMessage = "[Obsolete, use /lazy] Roll for the loot according to the argument and the item's RollResult. /rolling need | greed | pass",
-            ShowInHelp = true,
-        });
-
         Svc.Framework.Update += OnFrameworkUpdate;
     }
 
@@ -101,7 +95,6 @@ public class LazyLoot : IDalamudPlugin, IDisposable
 
         Svc.Commands.RemoveHandler("/lazy");
         Svc.Commands.RemoveHandler("/fulf");
-        Svc.Commands.RemoveHandler("/rolling");
 
         ECommonsMain.Dispose();
         PunishLibMain.Dispose();
