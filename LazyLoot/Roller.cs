@@ -196,7 +196,9 @@ internal static class Roller
                 var contentFinderInfo = Svc.Data.GetExcelSheet<ContentFinderCondition>().GetRow(GameMain.Instance()->CurrentContentFinderConditionId);
                 var instanceInfo = Svc.Data.GetExcelSheet<InstanceContent>().GetRow(contentFinderInfo.Content);
 
-                if (instanceInfo.WeekRestriction == 1)
+                if (instanceInfo.RowId is 30133 or 30131 or 30129 or 30127) continue;
+
+                if (instanceInfo.WeekRestriction == 1 && instanceInfo.RowId != 30125)
                 {
                     var item = Svc.Data.GetExcelSheet<Item>().GetRow(loot.ItemId);
 
