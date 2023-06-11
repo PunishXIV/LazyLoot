@@ -178,7 +178,8 @@ public class LazyLoot : IDalamudPlugin, IDisposable
             DtrEntry.Shown = false;
         }
 
-        if (!Svc.Condition[ConditionFlag.BoundByDuty]) return;
+        //Not sure why the below line is here? You can only roll on loot in duties anyway, plus it helps when SE changes which flag a duty has (such as Keeper of the Lake using BoundByDuty56)
+        //if (!Svc.Condition[ConditionFlag.BoundByDuty]) return;
         RollLoot();
     }
 
