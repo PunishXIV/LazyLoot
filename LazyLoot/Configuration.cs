@@ -47,6 +47,8 @@ namespace LazyLoot
         // Weekly lockout items
         public bool RestrictionWeeklyLockoutItems = false;
 
+        public bool DiagnosticsMode = false;
+
         public int Version { get; set; }
 
         public void Save() => Svc.PluginInterface.SavePluginConfig(this);

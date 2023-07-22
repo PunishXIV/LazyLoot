@@ -2,6 +2,7 @@
 using Dalamud.Logging;
 using ECommons.DalamudServices;
 using ECommons.GameHelpers;
+using ECommons.Logging;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Component.Exd;
@@ -10,6 +11,7 @@ using System;
 using System.Linq;
 using System.Reflection.Metadata.Ecma335;
 using System.Runtime.InteropServices;
+using PluginLog = Dalamud.Logging.PluginLog;
 
 namespace LazyLoot;
 
@@ -78,6 +80,9 @@ internal static class Roller
             _ => RollResult.Passed,
         };
 
+        if (LazyLoot.Config.DiagnosticsMode && loot.RollState == RollState.UpToPass)
+            DuoLog.Debug($"{Svc.Data.GetExcelSheet<Item>().GetRow(loot.ItemId).Name.RawString} can only be passed on. [RollState UpToPass]");
+
         //Checks what the player set loot rules are
         var ruleMax = loot.LootMode switch
         {
@@ -85,62 +90,98 @@ internal static class Roller
             LootMode.GreedOnly => RollResult.Greeded,
             _ => RollResult.Passed,
         };
+
         return ResultMerge(stateMax, ruleMax);
     }
     private unsafe static RollResult GetPlayerRestrict(LootItem loot)
     {
         var item = Svc.Data.GetExcelSheet<Item>().GetRow(loot.ItemId);
-        if (item == null) return RollResult.Passed;
+        if (item == null)
+        {
+            if (LazyLoot.Config.DiagnosticsMode)
+                DuoLog.Debug($"Passing due to unknown item? Please give this ID to the developers: {loot.ItemId} [Unknown ID]");
+            
+            return RollResult.Passed;
+        }
 
         //Unique.
-        if (item.IsUnique && ItemCount(loot.ItemId) > 0) return RollResult.Passed;
+        if (item.IsUnique && ItemCount(loot.ItemId) > 0) 
+        {
+            if (LazyLoot.Config.DiagnosticsMode)
+                DuoLog.Debug($"{item.Name.RawString} has been passed due to being unique and you already possess one. [Unique Item]");
+            
+            return RollResult.Passed;
+        }
+        
 
         if (IsItemUnlocked(loot.ItemId))
         {
             if (LazyLoot.Config.RestrictionIgnoreItemUnlocked)
             {
+                if (LazyLoot.Config.DiagnosticsMode)
+                    DuoLog.Debug($@"{item.Name.RawString} has been passed due to being unlocked and you have ""Pass on all items already unlocked"" enabled. [Pass All Unlocked]");
+
                 return RollResult.Passed;
             }
 
-            if ((LazyLoot.Config.RestrictionIgnoreMounts || item.IsUnique)
-                && item.ItemAction?.Value.Type == 1322)
+            if (LazyLoot.Config.RestrictionIgnoreMounts && item.ItemAction?.Value.Type == 1322)
             {
+                if (LazyLoot.Config.DiagnosticsMode)
+                    DuoLog.Debug($@"{item.Name.RawString} has been passed due to being unlocked and you have ""Pass on unlocked Mounts"" enabled. [Pass Mounts]");
+
                 return RollResult.Passed;
             }
 
-            if ((LazyLoot.Config.RestrictionIgnoreMinions || item.IsUnique)
-                && item.ItemAction?.Value.Type == 853)
+            if (LazyLoot.Config.RestrictionIgnoreMinions && item.ItemAction?.Value.Type == 853)
             {
+                if (LazyLoot.Config.DiagnosticsMode)
+                    DuoLog.Debug($@"{item.Name.RawString} has been passed due to being unlocked and you have ""Pass on unlocked Minions"" enabled. [Pass Minions]");
+
                 return RollResult.Passed;
             }
 
             if (LazyLoot.Config.RestrictionIgnoreBardings
                 && item.ItemAction?.Value.Type == 1013)
             {
+                if (LazyLoot.Config.DiagnosticsMode)
+                    DuoLog.Debug($@"{item.Name.RawString} has been passed due to being unlocked and you have ""Pass on unlocked Bardings"" enabled. [Pass Bardings]");
+
                 return RollResult.Passed;
             }
 
             if (LazyLoot.Config.RestrictionIgnoreEmoteHairstyle
                 && item.ItemAction?.Value.Type == 2633)
             {
+                if (LazyLoot.Config.DiagnosticsMode)
+                    DuoLog.Debug($@"{item.Name.RawString} has been passed due to being unlocked and you have ""Pass on unlocked Emotes and Hairstyles"" enabled. [Pass Emotes/Hairstyles]");
+
                 return RollResult.Passed;
             }
 
             if (LazyLoot.Config.RestrictionIgnoreTripleTriadCards
                 && item.ItemAction?.Value.Type == 3357)
             {
+                if (LazyLoot.Config.DiagnosticsMode)
+                    DuoLog.Debug($@"{item.Name.RawString} has been passed due to being unlocked and you have ""Pass on unlocked Triple Triad cards"" enabled. [Pass TTCards]");
+
                 return RollResult.Passed;
             }
 
             if (LazyLoot.Config.RestrictionIgnoreOrchestrionRolls
                 && item.ItemAction?.Value.Type == 25183)
             {
+                if (LazyLoot.Config.DiagnosticsMode)
+                    DuoLog.Debug($@"{item.Name.RawString} has been passed due to being unlocked and you have ""Pass on unlocked Orchestrion Rolls"" enabled. [Pass Orchestrion]");
+
                 return RollResult.Passed;
             }
 
             if (LazyLoot.Config.RestrictionIgnoreFadedCopy
                 && item.Icon == 25958)
             {
+                if (LazyLoot.Config.DiagnosticsMode)
+                    DuoLog.Debug($@"{item.Name.RawString} has been passed due to being unlocked and you have ""Pass on unlocked Faded Copies"" enabled. [Pass Faded Copies]");
+
                 return RollResult.Passed;
             }
         }
@@ -148,14 +189,20 @@ internal static class Roller
         if (item.EquipSlotCategory.Row != 0)
         {
             if (LazyLoot.Config.RestrictionIgnoreItemLevelBelow
-                && item.LevelItem.Row <= LazyLoot.Config.RestrictionIgnoreItemLevelBelowValue)
+                && item.LevelItem.Row < LazyLoot.Config.RestrictionIgnoreItemLevelBelowValue)
             {
+                if (LazyLoot.Config.DiagnosticsMode)
+                    DuoLog.Debug($@"{item.Name.RawString} has been passed due to having ""Pass on items with an item level below"" enabled and {item.LevelItem.Row} is less than {LazyLoot.Config.RestrictionIgnoreItemLevelBelowValue}. [Pass Item Level]");
+
                 return RollResult.Passed;
             }
 
             if (LazyLoot.Config.RestrictionOtherJobItems
                 && loot.RollState != RollState.UpToNeed)
             {
+                if (LazyLoot.Config.DiagnosticsMode)
+                    DuoLog.Debug($@"{item.Name.RawString} has been passed due to having ""Pass on items I can't use with current job"" and this item cannot be used with your current job. [Pass Other Job]");
+
                 return RollResult.Passed;
             }
         }
@@ -165,6 +212,9 @@ internal static class Roller
             && item.ItemAction?.Value.Type == 29153
             && !(Player.Object?.ClassJob?.Id is 1 or 19))
         {
+            if (LazyLoot.Config.DiagnosticsMode)
+                DuoLog.Debug($@"{item.Name.RawString} has been passed due to having ""Pass on items I can't use with current job"" and this item cannot be used with your current job. [Pass Other Job (PLD Sets)]");
+
             return RollResult.Passed;
         }
 

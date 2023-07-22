@@ -46,6 +46,8 @@ public class ConfigUi : Window, IDisposable
                 DrawChatAndToast();
                 ImGui.Separator();
                 DrawFulf();
+                ImGui.Separator();
+                DrawDiagnostics();
 
                 ImGui.EndChild();
                 ImGui.EndTabItem();
@@ -69,6 +71,14 @@ public class ConfigUi : Window, IDisposable
 
             ImGui.EndTabBar();
         }
+    }
+
+    private void DrawDiagnostics()
+    {
+        if (ImGui.Checkbox($"Diagnostics Mode", ref LazyLoot.Config.DiagnosticsMode))
+            LazyLoot.Config.Save();
+
+        ImGuiComponents.HelpMarker($"Outputs additional messages to chat whenever an item is passed, with reasons. This is useful for helping to diagnose issues with the developers or for understanding why LazyLoot makes decisions to pass on items.\r\n\r\nThese messages will only be displayed to you, nobody else in-game can see them.");
     }
 
     public override void OnClose()
