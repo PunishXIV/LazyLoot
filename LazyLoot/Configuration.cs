@@ -54,6 +54,8 @@ namespace LazyLoot
         public bool RestrictionLootIsJobUpgrade = false;
         public int RestrictionLootIsJobUpgradeRollState = 1;
 
+        public bool DiagnosticsMode = false;
+
         public int Version { get; set; }
 
         public void Save() => Svc.PluginInterface.SavePluginConfig(this);
