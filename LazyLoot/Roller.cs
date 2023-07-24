@@ -97,50 +97,44 @@ internal static class Roller
     }
     private unsafe static RollResult GetPlayerRestrict(LootItem loot)
     {
-        var item = Svc.Data.GetExcelSheet<Item>().GetRow(loot.ItemId);
-        if (item == null)
+        var lootItem = Svc.Data.GetExcelSheet<Item>().GetRow(loot.ItemId);
+        if (lootItem == null)
         {
             if (LazyLoot.Config.DiagnosticsMode)
                 DuoLog.Debug($"Passing due to unknown item? Please give this ID to the developers: {loot.ItemId} [Unknown ID]");
-            
             return RollResult.Passed;
         }
 
-        var lootItem = Svc.Data.GetExcelSheet<Item>().GetRow(loot.ItemId);
-        if (lootItem == null) return RollResult.Passed;
-
-        //Unique.
-        if (item.IsUnique && ItemCount(loot.ItemId) > 0) 
+        if (lootItem.IsUnique && ItemCount(loot.ItemId) > 0)
         {
             if (LazyLoot.Config.DiagnosticsMode)
-                DuoLog.Debug($"{item.Name.RawString} has been passed due to being unique and you already possess one. [Unique Item]");
-            
+                DuoLog.Debug($"{lootItem.Name.RawString} has been passed due to being unique and you already possess one. [Unique Item]");
+
             return RollResult.Passed;
         }
-        
 
         if (IsItemUnlocked(loot.ItemId))
         {
             if (LazyLoot.Config.RestrictionIgnoreItemUnlocked)
             {
                 if (LazyLoot.Config.DiagnosticsMode)
-                    DuoLog.Debug($@"{item.Name.RawString} has been passed due to being unlocked and you have ""Pass on all items already unlocked"" enabled. [Pass All Unlocked]");
+                    DuoLog.Debug($@"{lootItem.Name.RawString} has been passed due to being unlocked and you have ""Pass on all items already unlocked"" enabled. [Pass All Unlocked]");
 
                 return RollResult.Passed;
             }
 
-            if (LazyLoot.Config.RestrictionIgnoreMounts && item.ItemAction?.Value.Type == 1322)
+            if (LazyLoot.Config.RestrictionIgnoreMounts && lootItem.ItemAction?.Value.Type == 1322)
             {
                 if (LazyLoot.Config.DiagnosticsMode)
-                    DuoLog.Debug($@"{item.Name.RawString} has been passed due to being unlocked and you have ""Pass on unlocked Mounts"" enabled. [Pass Mounts]");
+                    DuoLog.Debug($@"{lootItem.Name.RawString} has been passed due to being unlocked and you have ""Pass on unlocked Mounts"" enabled. [Pass Mounts]");
 
                 return RollResult.Passed;
             }
 
-            if (LazyLoot.Config.RestrictionIgnoreMinions && item.ItemAction?.Value.Type == 853)
+            if (LazyLoot.Config.RestrictionIgnoreMinions && lootItem.ItemAction?.Value.Type == 853)
             {
                 if (LazyLoot.Config.DiagnosticsMode)
-                    DuoLog.Debug($@"{item.Name.RawString} has been passed due to being unlocked and you have ""Pass on unlocked Minions"" enabled. [Pass Minions]");
+                    DuoLog.Debug($@"{lootItem.Name.RawString} has been passed due to being unlocked and you have ""Pass on unlocked Minions"" enabled. [Pass Minions]");
 
                 return RollResult.Passed;
             }
@@ -149,7 +143,7 @@ internal static class Roller
                 && lootItem.ItemAction?.Value.Type == 1013)
             {
                 if (LazyLoot.Config.DiagnosticsMode)
-                    DuoLog.Debug($@"{item.Name.RawString} has been passed due to being unlocked and you have ""Pass on unlocked Bardings"" enabled. [Pass Bardings]");
+                    DuoLog.Debug($@"{lootItem.Name.RawString} has been passed due to being unlocked and you have ""Pass on unlocked Bardings"" enabled. [Pass Bardings]");
 
                 return RollResult.Passed;
             }
@@ -158,7 +152,7 @@ internal static class Roller
                 && lootItem.ItemAction?.Value.Type == 2633)
             {
                 if (LazyLoot.Config.DiagnosticsMode)
-                    DuoLog.Debug($@"{item.Name.RawString} has been passed due to being unlocked and you have ""Pass on unlocked Emotes and Hairstyles"" enabled. [Pass Emotes/Hairstyles]");
+                    DuoLog.Debug($@"{lootItem.Name.RawString} has been passed due to being unlocked and you have ""Pass on unlocked Emotes and Hairstyles"" enabled. [Pass Emotes/Hairstyles]");
 
                 return RollResult.Passed;
             }
@@ -167,7 +161,7 @@ internal static class Roller
                 && lootItem.ItemAction?.Value.Type == 3357)
             {
                 if (LazyLoot.Config.DiagnosticsMode)
-                    DuoLog.Debug($@"{item.Name.RawString} has been passed due to being unlocked and you have ""Pass on unlocked Triple Triad cards"" enabled. [Pass TTCards]");
+                    DuoLog.Debug($@"{lootItem.Name.RawString} has been passed due to being unlocked and you have ""Pass on unlocked Triple Triad cards"" enabled. [Pass TTCards]");
 
                 return RollResult.Passed;
             }
@@ -176,7 +170,7 @@ internal static class Roller
                 && lootItem.ItemAction?.Value.Type == 25183)
             {
                 if (LazyLoot.Config.DiagnosticsMode)
-                    DuoLog.Debug($@"{item.Name.RawString} has been passed due to being unlocked and you have ""Pass on unlocked Orchestrion Rolls"" enabled. [Pass Orchestrion]");
+                    DuoLog.Debug($@"{lootItem.Name.RawString} has been passed due to being unlocked and you have ""Pass on unlocked Orchestrion Rolls"" enabled. [Pass Orchestrion]");
 
                 return RollResult.Passed;
             }
@@ -185,7 +179,7 @@ internal static class Roller
                 && lootItem.Icon == 25958)
             {
                 if (LazyLoot.Config.DiagnosticsMode)
-                    DuoLog.Debug($@"{item.Name.RawString} has been passed due to being unlocked and you have ""Pass on unlocked Faded Copies"" enabled. [Pass Faded Copies]");
+                    DuoLog.Debug($@"{lootItem.Name.RawString} has been passed due to being unlocked and you have ""Pass on unlocked Faded Copies"" enabled. [Pass Faded Copies]");
 
                 return RollResult.Passed;
             }
@@ -225,10 +219,10 @@ internal static class Roller
             }
 
             if (LazyLoot.Config.RestrictionIgnoreItemLevelBelow
-                && item.LevelItem.Row < LazyLoot.Config.RestrictionIgnoreItemLevelBelowValue)
+                && lootItem.LevelItem.Row < LazyLoot.Config.RestrictionIgnoreItemLevelBelowValue)
             {
                 if (LazyLoot.Config.DiagnosticsMode)
-                    DuoLog.Debug($@"{item.Name.RawString} has been passed due to having ""Pass on items with an item level below"" enabled and {item.LevelItem.Row} is less than {LazyLoot.Config.RestrictionIgnoreItemLevelBelowValue}. [Pass Item Level]");
+                    DuoLog.Debug($@"{lootItem.Name.RawString} has been passed due to having ""Pass on items with an item level below"" enabled and {lootItem.LevelItem.Row} is less than {LazyLoot.Config.RestrictionIgnoreItemLevelBelowValue}. [Pass Item Level]");
 
                 return RollResult.Passed;
             }
@@ -237,7 +231,7 @@ internal static class Roller
                 && loot.RollState != RollState.UpToNeed)
             {
                 if (LazyLoot.Config.DiagnosticsMode)
-                    DuoLog.Debug($@"{item.Name.RawString} has been passed due to having ""Pass on items I can't use with current job"" and this item cannot be used with your current job. [Pass Other Job]");
+                    DuoLog.Debug($@"{lootItem.Name.RawString} has been passed due to having ""Pass on items I can't use with current job"" and this item cannot be used with your current job. [Pass Other Job]");
 
                 return RollResult.Passed;
             }
@@ -249,7 +243,7 @@ internal static class Roller
             && !(Player.Object?.ClassJob?.Id is 1 or 19))
         {
             if (LazyLoot.Config.DiagnosticsMode)
-                DuoLog.Debug($@"{item.Name.RawString} has been passed due to having ""Pass on items I can't use with current job"" and this item cannot be used with your current job. [Pass Other Job (PLD Sets)]");
+                DuoLog.Debug($@"{lootItem.Name.RawString} has been passed due to having ""Pass on items I can't use with current job"" and this item cannot be used with your current job. [Pass Other Job (PLD Sets)]");
 
             return RollResult.Passed;
         }
