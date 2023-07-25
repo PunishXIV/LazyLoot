@@ -202,6 +202,9 @@ internal static class Roller
             {
                 if (lootItem.LevelItem.Row < Utils.GetPlayerIlevel() - LazyLoot.Config.RestrictionLootLowerThanJobIlvlTreshold)
                 {
+                    if (LazyLoot.Config.DiagnosticsMode && LazyLoot.Config.RestrictionLootLowerThanJobIlvlRollState != 0)
+                        DuoLog.Debug($@"{lootItem.Name.RawString} has been passed due to being below your average item level and you have set to pass items below your average job item level. [Pass Item Lower Than Average iLevel]");
+
                     return LazyLoot.Config.RestrictionLootLowerThanJobIlvlRollState == 0 ? RollResult.Greeded : RollResult.Passed;
                 }
             }
@@ -224,6 +227,9 @@ internal static class Roller
                 // And we check if from the items gathered, if the lowest is higher than the droped item, we follow the rules defined by the user
                 if (itemsToVerify.Count > 0 && itemsToVerify.Min() > lootItem.LevelItem.Row)
                 {
+                    if (LazyLoot.Config.DiagnosticsMode && LazyLoot.Config.RestrictionLootIsJobUpgradeRollState != 0)
+                        DuoLog.Debug($@"{lootItem.Name.RawString} has been passed due to being below the level of your current equipped item level and you have set to pass items below the level of your equipped item. [Pass Item if equipped is of higher level]");
+
                     return LazyLoot.Config.RestrictionLootIsJobUpgradeRollState == 0 ? RollResult.Greeded : RollResult.Passed;
                 }
             }
