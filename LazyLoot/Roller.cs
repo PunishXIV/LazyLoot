@@ -35,9 +35,12 @@ internal static class Roller
         //Make option valid.
         option = ResultMerge(option, GetRestrictResult(loot), GetPlayerRestrict(loot));
 
+        PluginLog.Debug($"{loot.ItemId} {option}");
         if (_itemId == loot.ItemId && index == _index)
         {
-            PluginLog.Warning($"Item [{loot.ItemId}] roll {option} failed, please contract to the author or lower your delay.");
+            if (LazyLoot.Config.DiagnosticsMode)
+                DuoLog.Debug($"{Svc.Data.GetExcelSheet<Item>().GetRow(loot.ItemId).Name.RawString} has failed to roll for some reason. Passing for safety. [Emergency pass]");
+
             switch (option)
             {
                 case RollResult.Needed:
@@ -74,6 +77,10 @@ internal static class Roller
 
     private static RollResult GetRestrictResult(LootItem loot)
     {
+        var item = Svc.Data.GetExcelSheet<Item>().GetRow(loot.ItemId);
+        if (item == null)
+            return RollResult.Passed;
+
         //Checks what the max possible roll type on the item is
         var stateMax = loot.RollState switch
         {
@@ -82,8 +89,11 @@ internal static class Roller
             _ => RollResult.Passed,
         };
 
-        if (LazyLoot.Config.DiagnosticsMode && loot.RollState == RollState.UpToPass)
-            DuoLog.Debug($"{Svc.Data.GetExcelSheet<Item>().GetRow(loot.ItemId).Name.RawString} can only be passed on. [RollState UpToPass]");
+        if ((item.IsUntradable || (item.IsUnique && ItemCount(loot.ItemId) > 0)) && IsItemUnlocked(loot.ItemId))
+            stateMax = RollResult.Passed;
+
+        if (LazyLoot.Config.DiagnosticsMode && stateMax == RollResult.Passed)
+            DuoLog.Debug($"{item.Name.RawString} can only be passed on. [RollState UpToPass]");
 
         //Checks what the player set loot rules are
         var ruleMax = loot.LootMode switch
