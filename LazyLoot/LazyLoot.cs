@@ -250,8 +250,6 @@ public class LazyLoot : IDalamudPlugin, IDisposable
         string textValue = message.TextValue;
         if (textValue == Svc.Data.GetExcelSheet<LogMessage>()!.First(x => x.RowId == 5194).Text)
         {
-            Notify.Info(">>New Loot<<");
-
             _nextRollTime = DateTime.Now.AddMilliseconds(new Random()
                 .Next((int)(Config.FulfMinRollDelayInSeconds * 1000),
                 (int)(Config.FulfMaxRollDelayInSeconds * 1000)));
