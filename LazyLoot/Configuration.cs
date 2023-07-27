@@ -54,7 +54,9 @@ namespace LazyLoot
         public bool RestrictionLootIsJobUpgrade = false;
         public int RestrictionLootIsJobUpgradeRollState = 1;
 
+        //Diagnostics
         public bool DiagnosticsMode = false;
+        public bool NoPassEmergency = false;
 
         public int Version { get; set; }
 

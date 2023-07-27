@@ -74,10 +74,17 @@ public class ConfigUi : Window, IDisposable
 
     private void DrawDiagnostics()
     {
+        ImGuiEx.ImGuiLineCentered("DiagnosticsLabel", () => ImGuiEx.TextUnderlined("Diagnostics & Troubleshooting"));
+
         if (ImGui.Checkbox($"Diagnostics Mode", ref LazyLoot.Config.DiagnosticsMode))
             LazyLoot.Config.Save();
 
         ImGuiComponents.HelpMarker($"Outputs additional messages to chat whenever an item is passed, with reasons. This is useful for helping to diagnose issues with the developers or for understanding why LazyLoot makes decisions to pass on items.\r\n\r\nThese messages will only be displayed to you, nobody else in-game can see them.");
+
+        if (ImGui.Checkbox("Don't pass on items that fail to roll.", ref LazyLoot.Config.NoPassEmergency))
+            LazyLoot.Config.Save();
+
+        ImGuiComponents.HelpMarker($"Normally LazyLoot will pass on items that fail to roll. Enabling this option will prevent it from passing in those situations. Be warned there could be weird side effects doing this and should only be used if you're running into issues with emergency passing appearing.");
     }
 
     public override void OnClose()

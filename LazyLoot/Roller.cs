@@ -38,22 +38,25 @@ internal static class Roller
         PluginLog.Debug($"{loot.ItemId} {option}");
         if (_itemId == loot.ItemId && index == _index)
         {
-            if (LazyLoot.Config.DiagnosticsMode)
+            if (LazyLoot.Config.DiagnosticsMode && !LazyLoot.Config.NoPassEmergency)
                 DuoLog.Debug($"{Svc.Data.GetExcelSheet<Item>().GetRow(loot.ItemId).Name.RawString} has failed to roll for some reason. Passing for safety. [Emergency pass]");
 
-            switch (option)
+            if (!LazyLoot.Config.NoPassEmergency)
             {
-                case RollResult.Needed:
-                    need--;
-                    break;
-                case RollResult.Greeded:
-                    greed--;
-                    break;
-                default:
-                    pass--;
-                    break;
+                switch (option)
+                {
+                    case RollResult.Needed:
+                        need--;
+                        break;
+                    case RollResult.Greeded:
+                        greed--;
+                        break;
+                    default:
+                        pass--;
+                        break;
+                }
+                option = RollResult.Passed;
             }
-            option = RollResult.Passed;
         }
 
         RollItem(option, index);
