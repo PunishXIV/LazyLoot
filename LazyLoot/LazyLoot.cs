@@ -186,7 +186,7 @@ public class LazyLoot : IDalamudPlugin, IDisposable
         //No rolling in cutscene.
         if (Svc.Condition[ConditionFlag.OccupiedInCutSceneEvent]) return;
 
-        _nextRollTime = DateTime.Now.AddMilliseconds(Math.Max(150, new Random()
+        _nextRollTime = DateTime.Now.AddMilliseconds(Math.Max(1500, new Random()
             .Next((int)(Config.MinRollDelayInSeconds * 1000),
             (int)(Config.MaxRollDelayInSeconds * 1000))));
 
