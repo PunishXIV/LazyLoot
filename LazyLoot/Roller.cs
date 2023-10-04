@@ -92,7 +92,7 @@ internal static class Roller
             _ => RollResult.Passed,
         };
 
-        if ((item.IsUntradable || (item.IsUnique && ItemCount(loot.ItemId) > 0)) && IsItemUnlocked(loot.ItemId))
+        if (item.IsUnique && IsItemUnlocked(loot.ItemId))
             stateMax = RollResult.Passed;
 
         if (LazyLoot.Config.DiagnosticsMode && stateMax == RollResult.Passed)
