@@ -7,6 +7,7 @@ using Dalamud.Game.Text.SeStringHandling;
 using Dalamud.Game.Text.SeStringHandling.Payloads;
 using Dalamud.Logging;
 using Dalamud.Plugin;
+using Dalamud.Plugin.Services;
 using ECommons;
 using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
@@ -38,7 +39,7 @@ public class LazyLoot : IDalamudPlugin, IDisposable
     public LazyLoot(DalamudPluginInterface pluginInterface)
     {
         ECommonsMain.Init(pluginInterface, this);
-        PunishLibMain.Init(pluginInterface, this, new AboutPlugin() { Developer = "53m1k0l0n/Gidedin" });
+        PunishLibMain.Init(pluginInterface, "LazyLoot", new AboutPlugin() { Developer = "53m1k0l0n/Gidedin" });
         P = this;
 
         Config = Svc.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
@@ -148,7 +149,7 @@ public class LazyLoot : IDalamudPlugin, IDisposable
         ConfigUi.IsOpen = !ConfigUi.IsOpen;
     }
 
-    private void OnFrameworkUpdate(Framework framework)
+    private void OnFrameworkUpdate(IFramework framework)
     {
         if (Config.FulfEnabled)
         {

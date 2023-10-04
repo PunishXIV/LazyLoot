@@ -48,7 +48,7 @@
 	</PropertyGroup>
 
 	<ItemGroup>
-		<PackageReference Include="DalamudPackager" Version="2.1.10" />
+		<PackageReference Include="DalamudPackager" Version="2.1.12" />
 		<PackageReference Include="HtmlAgilityPack" Version="1.11.46" />
 		<ProjectReference Include="..\ECommons\ECommons\ECommons.csproj" />
 		<ProjectReference Include="..\PunishLib\PunishLib\PunishLib.csproj" />

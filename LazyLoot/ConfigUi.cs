@@ -64,7 +64,7 @@ public class ConfigUi : Window, IDisposable
 
             if (ImGui.BeginTabItem("About"))
             {
-                PunishLib.ImGuiMethods.AboutTab.Draw(LazyLoot.P);
+                PunishLib.ImGuiMethods.AboutTab.Draw("LazyLoot");
                 ImGui.EndTabItem();
             }
 
