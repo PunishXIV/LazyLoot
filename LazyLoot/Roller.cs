@@ -283,6 +283,7 @@ internal static class Roller
                 {
                     Svc.Log.Debug($"Updating Faded Copy {itemId} to Non-Faded {recipe.RowId}");
                     orchId = recipe.RowId;
+                    return;
                 }
                 
             }

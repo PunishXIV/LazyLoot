@@ -86,7 +86,8 @@ public class ConfigUi : Window, IDisposable
 
         if (ImGui.Button("Faded Copy Converter Check?"))
         {
-            Roller.UpdateFadedCopy((uint)debugValue, out _);
+            Roller.UpdateFadedCopy((uint)debugValue, out uint nonfaded);
+            Svc.Log.Debug($"Non-Faded is {nonfaded}");
         }
     }
 
