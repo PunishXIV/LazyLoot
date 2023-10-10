@@ -24,6 +24,7 @@ public class ConfigUi : Window, IDisposable
         Svc.PluginInterface.UiBuilder.Draw += windowSystem.Draw;
     }
 
+    private int debugValue = 0;
     public void Dispose()
     {
         Svc.PluginInterface.UiBuilder.Draw -= windowSystem.Draw;
@@ -68,7 +69,24 @@ public class ConfigUi : Window, IDisposable
                 ImGui.EndTabItem();
             }
 
+#if DEBUG
+            if (ImGui.BeginTabItem("Debug"))
+            {
+                DrawDebug();
+                ImGui.EndTabItem();
+            }
+#endif
             ImGui.EndTabBar();
+        }
+    }
+
+    private void DrawDebug()
+    {
+        ImGui.InputInt("Debug Value Tester", ref debugValue);
+
+        if (ImGui.Button("Faded Copy Converter Check?"))
+        {
+            Roller.UpdateFadedCopy((uint)debugValue, out _);
         }
     }
 

@@ -1,17 +1,14 @@
 ﻿using Dalamud.Game.ClientState.Objects.Types;
-using Dalamud.Logging;
 using ECommons.DalamudServices;
 using ECommons.GameHelpers;
 using ECommons.Logging;
 using FFXIVClientStructs.FFXIV.Client.Game;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using FFXIVClientStructs.FFXIV.Component.Exd;
-using ImGuiScene;
 using Lumina.Excel.GeneratedSheets;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Reflection.Metadata.Ecma335;
 using System.Runtime.InteropServices;
 using PluginLog = Dalamud.Logging.PluginLog;
 
@@ -111,6 +108,10 @@ internal static class Roller
     private unsafe static RollResult GetPlayerRestrict(LootItem loot)
     {
         var lootItem = Svc.Data.GetExcelSheet<Item>().GetRow(loot.ItemId);
+
+        uint orchId = 0;
+        UpdateFadedCopy(loot.ItemId, out orchId);
+
         if (lootItem == null)
         {
             if (LazyLoot.Config.DiagnosticsMode)
@@ -126,7 +127,7 @@ internal static class Roller
             return RollResult.Passed;
         }
 
-        if (IsItemUnlocked(loot.ItemId))
+        if (orchId != 0 ? IsItemUnlocked(orchId) : IsItemUnlocked(loot.ItemId))
         {
             if (LazyLoot.Config.RestrictionIgnoreItemUnlocked)
             {
@@ -270,6 +271,26 @@ internal static class Roller
         return RollResult.Needed;
     }
 
+    public static void UpdateFadedCopy(uint itemId, out uint orchId)
+    {
+        var lumina = Svc.Data.GetExcelSheet<Item>().GetRow(itemId);
+        if (lumina != null)
+        {
+            if (lumina.FilterGroup == 12 && lumina.ItemUICategory.Row == 94)
+            {
+                var recipe = Svc.Data.GetExcelSheet<Recipe>()?.Where(x => x.UnkData5.Any(y => y.ItemIngredient == lumina.RowId)).Select(x => x.ItemResult.Value).FirstOrDefault();
+                if (recipe != null)
+                {
+                    Svc.Log.Debug($"Updating Faded Copy {itemId} to Non-Faded {recipe.RowId}");
+                    orchId = recipe.RowId;
+                }
+                
+            }
+        }
+
+        orchId = 0;
+    }
+
     private static RollResult ResultMerge(params RollResult[] results)
        => results.Max() switch
        {
@@ -297,7 +318,10 @@ internal static class Roller
 
                 if (instanceInfo.RowId is 30133 or 30131 or 30129 or 30127) continue;
 
-                if (instanceInfo.WeekRestriction == 1 && instanceInfo.RowId != 30125)
+                var lootReward = Svc.Data.Excel.GetSheetRaw("InstanceContentRewardItem")?.Where(x => x.RowId == instanceInfo.InstanceContentRewardItem).FirstOrDefault();
+
+                Svc.Log.Debug($"{lootReward.ReadColumn<sbyte>(0)} {lootReward.ReadColumn<sbyte>(1)}");
+                if (instanceInfo.WeekRestriction == 1 && lootReward.ReadColumn<sbyte>(0) != -1)
                 {
                     var item = Svc.Data.GetExcelSheet<Item>().GetRow(loot.ItemId);
 
