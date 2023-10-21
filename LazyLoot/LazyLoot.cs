@@ -110,6 +110,14 @@ public class LazyLoot : IDalamudPlugin, IDisposable
         {
             Config.FulfRoll = res.Value;
         }
+        else if (arguments.Contains("off", StringComparison.OrdinalIgnoreCase))
+        {
+            Config.FulfEnabled = false;
+        }
+        else if (arguments.Contains("on", StringComparison.OrdinalIgnoreCase))
+        {
+            Config.FulfEnabled = true;
+        }
         else
         {
             Config.FulfEnabled = !Config.FulfEnabled;
