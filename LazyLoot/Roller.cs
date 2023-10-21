@@ -363,5 +363,16 @@ internal static class Roller
         => InventoryManager.Instance()->GetInventoryItemCount(itemId);
 
     private static unsafe bool IsItemUnlocked(uint itemId)
-        => UIState.Instance()->IsItemActionUnlocked(ExdModule.GetItemRowById(itemId)) == 1;
+    {
+        try
+        {
+            return UIState.Instance()->IsItemActionUnlocked(ExdModule.GetItemRowById(itemId)) == 1;
+        }
+        catch (Exception ex)
+        {
+            PluginLog.Warning(ex, $"Exception in IsItemActionUnlocked for itemId {itemId}");
+            // Return true to avoid infinite loop
+            return true;
+        }
+    }
 }
