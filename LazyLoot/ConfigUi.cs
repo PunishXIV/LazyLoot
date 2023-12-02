@@ -4,6 +4,7 @@ using Dalamud.Interface.Windowing;
 using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
 using ImGuiNET;
+using Lumina.Excel.GeneratedSheets;
 using System;
 using System.Numerics;
 
@@ -69,13 +70,12 @@ public class ConfigUi : Window, IDisposable
                 ImGui.EndTabItem();
             }
 
-#if DEBUG
             if (ImGui.BeginTabItem("Debug"))
             {
                 DrawDebug();
                 ImGui.EndTabItem();
             }
-#endif
+
             ImGui.EndTabBar();
         }
     }
@@ -84,11 +84,22 @@ public class ConfigUi : Window, IDisposable
     {
         ImGui.InputInt("Debug Value Tester", ref debugValue);
 
-        if (ImGui.Button("Faded Copy Converter Check?"))
-        {
-            Roller.UpdateFadedCopy((uint)debugValue, out uint nonfaded);
-            Svc.Log.Debug($"Non-Faded is {nonfaded}");
-        }
+        ImGui.Text($"Is Unlocked: {Roller.IsItemUnlocked((uint)debugValue)}");
+
+        //if (ImGui.Button("Faded Copy Converter Check?"))
+        //{
+        //    Roller.UpdateFadedCopy((uint)debugValue, out uint nonfaded);
+        //    Svc.Log.Debug($"Non-Faded is {nonfaded}");
+        //}
+
+        //if (ImGui.Button("Check all Faded Copies"))
+        //{
+        //    foreach (var i in Svc.Data.GetExcelSheet<Item>().Where(x => x.FilterGroup == 12 && x.ItemUICategory.Row == 94))
+        //    {
+        //        Roller.UpdateFadedCopy((uint)i.RowId, out uint nonfaded);
+        //        Svc.Log.Debug($"{i.Name}");
+        //    }
+        //}
     }
 
     private void DrawDiagnostics()
@@ -187,6 +198,7 @@ public class ConfigUi : Window, IDisposable
         if (LazyLoot.Config.RestrictionLootLowerThanJobIlvlTreshold < 0) LazyLoot.Config.RestrictionLootLowerThanJobIlvlTreshold = 0;
         ImGui.SameLine();
         ImGui.Text($"item levels lower than your current job item level (\u2605 {Utils.GetPlayerIlevel()}).");
+        ImGuiComponents.HelpMarker("This setting will only apply to gear you can need on.");
 
         ImGui.Checkbox("###RestrictionLootIsJobUpgrade", ref LazyLoot.Config.RestrictionLootIsJobUpgrade);
         ImGui.SameLine();
@@ -196,6 +208,17 @@ public class ConfigUi : Window, IDisposable
         ImGui.Combo("###RestrictionLootIsJobUpgradeRollState", ref LazyLoot.Config.RestrictionLootIsJobUpgradeRollState, new string[] { "Greed", "Pass" }, 2);
         ImGui.SameLine();
         ImGui.Text($"on items if the current equipped item of the same type has a higher item level.");
+        ImGuiComponents.HelpMarker("This setting will only apply to gear you can need on.");
+
+        ImGui.Checkbox($"###RestrictionSeals", ref LazyLoot.Config.RestrictionSeals);
+        ImGui.SameLine();
+        ImGui.Text("Pass on items with a expert delivery seal value of less than");
+        ImGui.SameLine();
+        ImGui.SetNextItemWidth(100);
+        ImGui.DragInt("###RestrictionSealsAmnt", ref LazyLoot.Config.RestrictionSealsAmnt);
+        ImGui.SameLine();
+        ImGui.Text($"(item level {Roller.ConvertSealsToIlvl(LazyLoot.Config.RestrictionSealsAmnt)} and below)");
+        ImGuiComponents.HelpMarker("This setting will only apply to gear able to be turned in for expert delivery.");
 
     }
 

@@ -53,6 +53,9 @@ namespace LazyLoot
         // Loot is an upgrade to the current job
         public bool RestrictionLootIsJobUpgrade = false;
         public int RestrictionLootIsJobUpgradeRollState = 1;
+        // Loot by Seal Worth
+        public bool RestrictionSeals = false;
+        public int RestrictionSealsAmnt = 1;
 
         //Diagnostics
         public bool DiagnosticsMode = false;

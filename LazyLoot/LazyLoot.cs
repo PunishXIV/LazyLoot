@@ -47,6 +47,12 @@ public class LazyLoot : IDalamudPlugin, IDisposable
         Svc.PluginInterface.UiBuilder.OpenConfigUi += OnOpenConfigUi;
         Svc.Chat.CheckMessageHandled += NoticeLoot;
 
+        Svc.Commands.AddHandler("/lazyloot", new CommandInfo(LazyCommand)
+        {
+            HelpMessage = "Open Lazy Loot config.",
+            ShowInHelp = true,
+        });
+
         Svc.Commands.AddHandler("/lazy", new CommandInfo(LazyCommand)
         {
             HelpMessage = "Open Lazy Loot config by default. Add need | greed | pass to roll on current items.",
@@ -91,6 +97,7 @@ public class LazyLoot : IDalamudPlugin, IDisposable
         Svc.PluginInterface.UiBuilder.OpenConfigUi -= OnOpenConfigUi;
         Svc.Chat.CheckMessageHandled -= NoticeLoot;
 
+        Svc.Commands.RemoveHandler("/lazyloot");
         Svc.Commands.RemoveHandler("/lazy");
         Svc.Commands.RemoveHandler("/fulf");
 

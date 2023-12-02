@@ -1,4 +1,5 @@
 ﻿using Dalamud.Game.ClientState.Objects.Types;
+using ECommons;
 using ECommons.DalamudServices;
 using ECommons.GameHelpers;
 using ECommons.Logging;
@@ -199,6 +200,21 @@ internal static class Roller
             }
         }
 
+        if (LazyLoot.Config.RestrictionSeals)
+        {
+            if (lootItem.Rarity > 1 && lootItem.PriceLow > 0 && lootItem.ClassJobCategory.Row > 0)
+            {
+                var gcSealValue = Svc.Data.Excel.GetSheet<GCSupplyDutyReward>()?.GetRow(lootItem.LevelItem.Row).SealsExpertDelivery;
+                if (gcSealValue < LazyLoot.Config.RestrictionSealsAmnt)
+                {
+                    if (LazyLoot.Config.DiagnosticsMode)
+                        DuoLog.Debug($@"{lootItem.Name.RawString} has been passed due to selling for less than {LazyLoot.Config.RestrictionSealsAmnt} seals. [Pass Seals]");
+
+                    return RollResult.Passed;
+                }
+            }
+        }
+
         if (lootItem.EquipSlotCategory.Row != 0)
         {
             // Check if the loot item level is below the average level of the user job
@@ -359,9 +375,27 @@ internal static class Roller
         }
     }
 
-    private static unsafe int ItemCount(uint itemId)
+    public static unsafe int ItemCount(uint itemId)
         => InventoryManager.Instance()->GetInventoryItemCount(itemId);
 
-    private static unsafe bool IsItemUnlocked(uint itemId)
-        => UIState.Instance()->IsItemActionUnlocked(ExdModule.GetItemRowById(itemId)) == 1;
+    public static unsafe bool IsItemUnlocked(uint itemId)
+    {
+        var exdItem = ExdModule.GetItemRowById(itemId);
+        return exdItem is null || UIState.Instance()->IsItemActionUnlocked(exdItem) is 1;
+    }
+
+    public static uint ConvertSealsToIlvl(int sealAmnt)
+    {
+        var sealsSheet = Svc.Data.GetExcelSheet<GCSupplyDutyReward>();
+        uint ilvl = 0;
+        foreach (var row in sealsSheet)
+        {
+            if (row.SealsExpertDelivery < sealAmnt)
+            {
+                ilvl = row.RowId;
+            }
+        }
+
+        return ilvl;
+    }
 }
