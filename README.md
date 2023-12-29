@@ -2,7 +2,9 @@
 
 Repo Url: 
 
-`https://love.puni.sh/ment.json`
+```
+https://love.puni.sh/ment.json
+```
 
 # FFXIV-LazyLoot 
 
