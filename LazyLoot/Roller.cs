@@ -323,6 +323,7 @@ internal static class Roller
         for (i = 0; i < span.Length; i++)
         {
             loot = span[(int)i];
+            if (loot.ItemId >= 1000000) loot.ItemId -= 1000000;
             if (loot.ChestObjectId is 0 or GameObject.InvalidGameObjectId) continue;
             if ((RollResult)loot.RollResult != RollResult.UnAwarded) continue;
             if (loot.RollState is RollState.Rolled or RollState.Unavailable or RollState.Unknown) continue;
