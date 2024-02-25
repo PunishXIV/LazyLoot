@@ -1,5 +1,4 @@
 ﻿using Dalamud.Game.ClientState.Objects.Types;
-using ECommons;
 using ECommons.DalamudServices;
 using ECommons.GameHelpers;
 using ECommons.Logging;
@@ -110,8 +109,7 @@ internal static class Roller
     {
         var lootItem = Svc.Data.GetExcelSheet<Item>().GetRow(loot.ItemId);
 
-        uint orchId = 0;
-        UpdateFadedCopy(loot.ItemId, out orchId);
+        UpdateFadedCopy(loot.ItemId, out var orchId);
 
         if (lootItem == null)
         {
@@ -128,7 +126,27 @@ internal static class Roller
             return RollResult.Passed;
         }
 
-        if (orchId != 0 ? IsItemUnlocked(orchId) : IsItemUnlocked(loot.ItemId))
+        if (orchId.Count > 0 && orchId.All(x => IsItemUnlocked(x)))
+        {
+            if (LazyLoot.Config.RestrictionIgnoreItemUnlocked)
+            {
+                if (LazyLoot.Config.DiagnosticsMode)
+                    DuoLog.Debug($@"{lootItem.Name.RawString} has been passed due to being unlocked and you have ""Pass on all items already unlocked"" enabled. [Pass All Unlocked]");
+
+                return RollResult.Passed;
+            }
+
+            if (LazyLoot.Config.RestrictionIgnoreFadedCopy
+                && lootItem.FilterGroup == 12 && lootItem.ItemUICategory.Row == 94)
+            {
+                if (LazyLoot.Config.DiagnosticsMode)
+                    DuoLog.Debug($@"{lootItem.Name.RawString} has been passed due to being unlocked and you have ""Pass on unlocked Faded Copies"" enabled. [Pass Faded Copies]");
+
+                return RollResult.Passed;
+            }
+        }
+
+        if (IsItemUnlocked(loot.ItemId))
         {
             if (LazyLoot.Config.RestrictionIgnoreItemUnlocked)
             {
@@ -186,15 +204,6 @@ internal static class Roller
             {
                 if (LazyLoot.Config.DiagnosticsMode)
                     DuoLog.Debug($@"{lootItem.Name.RawString} has been passed due to being unlocked and you have ""Pass on unlocked Orchestrion Rolls"" enabled. [Pass Orchestrion]");
-
-                return RollResult.Passed;
-            }
-
-            if (LazyLoot.Config.RestrictionIgnoreFadedCopy
-                && lootItem.Icon == 25958)
-            {
-                if (LazyLoot.Config.DiagnosticsMode)
-                    DuoLog.Debug($@"{lootItem.Name.RawString} has been passed due to being unlocked and you have ""Pass on unlocked Faded Copies"" enabled. [Pass Faded Copies]");
 
                 return RollResult.Passed;
             }
@@ -287,8 +296,9 @@ internal static class Roller
         return RollResult.Needed;
     }
 
-    public static void UpdateFadedCopy(uint itemId, out uint orchId)
+    public static void UpdateFadedCopy(uint itemId, out List<uint> orchId)
     {
+        orchId = new();
         var lumina = Svc.Data.GetExcelSheet<Item>().GetRow(itemId);
         if (lumina != null)
         {
@@ -297,15 +307,14 @@ internal static class Roller
                 var recipe = Svc.Data.GetExcelSheet<Recipe>()?.Where(x => x.UnkData5.Any(y => y.ItemIngredient == lumina.RowId)).Select(x => x.ItemResult.Value).FirstOrDefault();
                 if (recipe != null)
                 {
-                    Svc.Log.Debug($"Updating Faded Copy {itemId} to Non-Faded {recipe.RowId}");
-                    orchId = recipe.RowId;
+                    if (LazyLoot.Config.DiagnosticsMode)
+                        DuoLog.Debug($"Updating Faded Copy {lumina.Name} ({itemId}) to Non-Faded {recipe.Name} ({recipe.RowId})");
+                    orchId.Add(recipe.RowId);
                     return;
                 }
-                
+
             }
         }
-
-        orchId = 0;
     }
 
     private static RollResult ResultMerge(params RollResult[] results)
