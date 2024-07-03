@@ -10,7 +10,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
-using PluginLog = Dalamud.Logging.PluginLog;
 
 namespace LazyLoot;
 
@@ -32,7 +31,7 @@ internal static class Roller
         //Make option valid.
         option = ResultMerge(option, GetRestrictResult(loot), GetPlayerRestrict(loot));
 
-        PluginLog.Debug($"{loot.ItemId} {option}");
+        Svc.Log.Debug($"{loot.ItemId} {option}");
         if (_itemId == loot.ItemId && index == _index)
         {
             if (LazyLoot.Config.DiagnosticsMode && !LazyLoot.Config.NoPassEmergency)
@@ -247,7 +246,7 @@ internal static class Roller
                 for (int i = 0; i < equippedItems->Size; i++)
                 {
                     InventoryItem* equippedItem = equippedItems->GetInventorySlot(i);
-                    Item equippedItemData = Svc.Data.GetExcelSheet<Item>().GetRow(equippedItem->ItemID);
+                    Item equippedItemData = Svc.Data.GetExcelSheet<Item>().GetRow(equippedItem->ItemId);
                     if (equippedItemData == null) continue;
                     if (equippedItemData.EquipSlotCategory.Row != lootItemSlot) continue;
                     // We gather all the iLvls of the equipped items in the same slot (if any)
@@ -328,12 +327,12 @@ internal static class Roller
 
     private static unsafe bool GetNextLootItem(out uint i, out LootItem loot)
     {
-        var span = Loot.Instance()->ItemArraySpan;
+        var span = Loot.Instance()->Items;
         for (i = 0; i < span.Length; i++)
         {
             loot = span[(int)i];
             if (loot.ItemId >= 1000000) loot.ItemId -= 1000000;
-            if (loot.ChestObjectId is 0 or GameObject.InvalidGameObjectId) continue;
+            if (loot.ChestObjectId is 0 or 0xE0000000) continue;
             if ((RollResult)loot.RollResult != RollResult.UnAwarded) continue;
             if (loot.RollState is RollState.Rolled or RollState.Unavailable or RollState.Unknown) continue;
             if (loot.ItemId == 0) continue;
@@ -341,7 +340,7 @@ internal static class Roller
             if (LazyLoot.Config.RestrictionWeeklyLockoutItems)
             {
                 var contentFinderInfo = Svc.Data.GetExcelSheet<ContentFinderCondition>().GetRow(GameMain.Instance()->CurrentContentFinderConditionId);
-                var instanceInfo = Svc.Data.GetExcelSheet<InstanceContent>().GetRow(contentFinderInfo.Content);
+                var instanceInfo = Svc.Data.GetExcelSheet<Lumina.Excel.GeneratedSheets.InstanceContent>().GetRow(contentFinderInfo.Content);
 
                 if (instanceInfo.RowId is 30133 or 30131 or 30129 or 30127) continue;
 
@@ -381,7 +380,7 @@ internal static class Roller
         }
         catch (Exception ex)
         {
-            PluginLog.Warning(ex, "Warning at roll");
+            Svc.Log.Warning(ex, "Warning at roll");
         }
     }
 

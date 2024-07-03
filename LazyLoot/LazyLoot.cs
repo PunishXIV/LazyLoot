@@ -31,10 +31,10 @@ public class LazyLoot : IDalamudPlugin, IDisposable
 
     internal static Configuration Config;
     internal static ConfigUi ConfigUi;
-    internal static DtrBarEntry DtrEntry;
+    internal static IDtrBarEntry DtrEntry;
 
     internal static LazyLoot P;
-    public LazyLoot(DalamudPluginInterface pluginInterface)
+    public LazyLoot(IDalamudPluginInterface pluginInterface)
     {
         ECommonsMain.Init(pluginInterface, this);
         PunishLibMain.Init(pluginInterface, "LazyLoot", new AboutPlugin() { Developer = "53m1k0l0n/Gidedin" });
@@ -129,7 +129,7 @@ public class LazyLoot : IDalamudPlugin, IDisposable
 
         ECommonsMain.Dispose();
         PunishLibMain.Dispose();
-        PluginLog.Information(">>Stop LazyLoot<<");
+        Svc.Log.Information(">>Stop LazyLoot<<");
         DtrEntry.Remove();
 
         Svc.Framework.Update -= OnFrameworkUpdate;
@@ -237,7 +237,7 @@ public class LazyLoot : IDalamudPlugin, IDisposable
         }
         catch (Exception ex)
         {
-            PluginLog.Error(ex, "Something Wrong with rolling!");
+            Svc.Log.Error(ex, "Something Wrong with rolling!");
         }
     }
 
@@ -278,7 +278,7 @@ public class LazyLoot : IDalamudPlugin, IDisposable
         }
     }
 
-    private void NoticeLoot(XivChatType type, uint senderId, ref SeString sender, ref SeString message, ref bool isHandled)
+    private void NoticeLoot(XivChatType type, int senderId, ref SeString sender, ref SeString message, ref bool isHandled)
     {
         if (!Config.FulfEnabled || type != (XivChatType)2105) return;
 
