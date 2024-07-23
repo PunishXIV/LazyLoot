@@ -344,10 +344,7 @@ internal static class Roller
 
                 if (instanceInfo.RowId is 30133 or 30131 or 30129 or 30127) continue;
 
-                var lootReward = Svc.Data.Excel.GetSheetRaw("InstanceContentRewardItem")?.Where(x => x.RowId == instanceInfo.InstanceContentRewardItem).FirstOrDefault();
-
-                Svc.Log.Debug($"{lootReward.ReadColumn<sbyte>(0)} {lootReward.ReadColumn<sbyte>(1)}");
-                if (instanceInfo.WeekRestriction == 1 && lootReward.ReadColumn<sbyte>(0) != -1)
+                if (instanceInfo.WeekRestriction == 1)
                 {
                     var item = Svc.Data.GetExcelSheet<Item>().GetRow(loot.ItemId);
 
