@@ -13,5 +13,6 @@
   "RepoUrl": "https://github.com/PunishXIV/LazyLoot",
   "ImageUrls": null,
   "IconUrl": "https://love.puni.sh/resources/lazyloot.png",
-  "DalamudAPILevel":  10
+  "DalamudAPILevel": 10,
+  "ChangeLog": "- More fixes to weekly loot skipping"
 }
