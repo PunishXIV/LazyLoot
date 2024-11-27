@@ -1,5 +1,4 @@
-﻿using Dalamud.Game.ClientState.Objects.Types;
-using ECommons.DalamudServices;
+﻿using ECommons.DalamudServices;
 using ECommons.GameHelpers;
 using ECommons.Logging;
 using FFXIVClientStructs.FFXIV.Client.Game;
@@ -237,6 +236,15 @@ internal static class Roller
                 }
             }
 
+            if (LazyLoot.Config.RestrictionIgnoreItemLevelBelow
+                && lootItem.Value.LevelItem.RowId < LazyLoot.Config.RestrictionIgnoreItemLevelBelowValue)
+            {
+                if (LazyLoot.Config.DiagnosticsMode)
+                    DuoLog.Debug($@"{lootItem.Value.Name.ToString()} has been passed due to having ""Pass on items with an item level below"" enabled and {lootItem.Value.LevelItem.RowId} is less than {LazyLoot.Config.RestrictionIgnoreItemLevelBelowValue}. [Pass Item Level]");
+
+                return RollResult.Passed;
+            }
+
             // Check if the loot item is an actual upgrade to the user (has a higher ilvl)
             if (LazyLoot.Config.RestrictionLootIsJobUpgrade && loot.RollState == RollState.UpToNeed)
             {
@@ -260,15 +268,6 @@ internal static class Roller
 
                     return LazyLoot.Config.RestrictionLootIsJobUpgradeRollState == 0 ? RollResult.Greeded : RollResult.Passed;
                 }
-            }
-
-            if (LazyLoot.Config.RestrictionIgnoreItemLevelBelow
-                && lootItem.Value.LevelItem.RowId < LazyLoot.Config.RestrictionIgnoreItemLevelBelowValue)
-            {
-                if (LazyLoot.Config.DiagnosticsMode)
-                    DuoLog.Debug($@"{lootItem.Value.Name.ToString()} has been passed due to having ""Pass on items with an item level below"" enabled and {lootItem.Value.LevelItem.RowId} is less than {LazyLoot.Config.RestrictionIgnoreItemLevelBelowValue}. [Pass Item Level]");
-
-                return RollResult.Passed;
             }
 
             if (LazyLoot.Config.RestrictionOtherJobItems
