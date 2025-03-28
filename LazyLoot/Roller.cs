@@ -340,8 +340,7 @@ internal static class Roller
             {
                 var contentFinderInfo = Svc.Data.GetExcelSheet<ContentFinderCondition>().GetRow(GameMain.Instance()->CurrentContentFinderConditionId);
                 var instanceInfo = Svc.Data.GetExcelSheet<Lumina.Excel.Sheets.InstanceContent>().GetRow(contentFinderInfo.Content.RowId);
-
-                if (contentFinderInfo.RowId is >= 985 and <= 992) continue; //We really need a better solution
+                if (contentFinderInfo.RowId is >= 1019 and <= 1026) continue; //We really need a better solution
 
                 if (instanceInfo.WeekRestriction == 1)
                 {
