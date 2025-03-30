@@ -313,6 +313,10 @@ public class ConfigUi : Window, IDisposable
 
     private static void DrawUserRestrictionItems()
     {
+        ImGuiEx.LineCentered("ItemRestrictionWarning",
+            () => ImGui.TextColored(ImGuiColors.DalamudYellow, "These rules override any other restriction settings"));
+        ImGui.Separator();
+
         if (ImGui.BeginTable("UserRestrictionItemsTable", 8, ImGuiTableFlags.Borders))
         {
             ImGui.TableSetupColumn("Enabled", ImGuiTableColumnFlags.WidthFixed, 50f);
@@ -459,6 +463,16 @@ public class ConfigUi : Window, IDisposable
 
     private static void DrawUserRestrictionDuties()
     {
+        ImGuiEx.LineCentered("ItemRestrictionWarning",
+            () => {
+                var width = ImGui.GetWindowWidth() - 30;
+                ImGui.PushTextWrapPos(width);
+                ImGui.TextColored(ImGuiColors.DalamudYellow,
+                    "These rules override the main restriction settings, but is overriden by the item restriction settings if they happen to collide.");
+                ImGui.PopTextWrapPos();
+            });
+        ImGui.Separator();
+
         if (ImGui.BeginTable("UserRestrictionDutiesTable", 8, ImGuiTableFlags.Borders))
         {
             ImGui.TableSetupColumn("Enabled", ImGuiTableColumnFlags.WidthFixed, 50f);
