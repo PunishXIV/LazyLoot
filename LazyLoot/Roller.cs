@@ -156,7 +156,7 @@ internal static class Roller
         // Here, we will check for the specific rules for items.
         var itemCustomRestriction =
             LazyLoot.Config.Restrictions.Items.FirstOrDefault(x => x.Id == loot.ItemId.ToString());
-        if (itemCustomRestriction != null)
+        if (itemCustomRestriction is { Enabled: true })
         {
             if (LazyLoot.Config.DiagnosticsMode)
             {
@@ -177,7 +177,7 @@ internal static class Roller
             .GetRow(GameMain.Instance()->CurrentContentFinderConditionId);
         var dutyCustomRestriction =
             LazyLoot.Config.Restrictions.Duties.FirstOrDefault(x => x.Id == contentFinderInfo.RowId.ToString());
-        if (dutyCustomRestriction != null)
+        if (dutyCustomRestriction is { Enabled: true })
         {
             if (LazyLoot.Config.DiagnosticsMode)
             {

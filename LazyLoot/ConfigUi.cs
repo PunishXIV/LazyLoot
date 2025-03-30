@@ -47,7 +47,7 @@ public class ConfigUi : Window, IDisposable
 
         [FieldOffset(0x38)] public LootMode LootMode;
     }
-    
+
     public ConfigUi() : base("Lazy Loot Config")
     {
         SizeConstraints = new WindowSizeConstraints
@@ -115,7 +115,6 @@ public class ConfigUi : Window, IDisposable
 
     private unsafe void DrawDebug()
     {
-
         if (ImGui.CollapsingHeader("Is Item Unlocked?"))
         {
             ImGui.InputInt("Debug Value Tester", ref debugValue);
@@ -129,14 +128,14 @@ public class ConfigUi : Window, IDisposable
             {
                 foreach (var item in loot->Items)
                 {
-                    if (item.ItemId == 0) continue;    
+                    if (item.ItemId == 0) continue;
                     var casted = (DebugLootItem*)&item;
                     ImGui.PushID($"{casted->ItemId}");
                     Dalamud.Utility.Util.ShowStruct(casted);
                 }
             }
         }
-        
+
         //if (ImGui.Button("Faded Copy Converter Check?"))
         //{
         //    Roller.UpdateFadedCopy((uint)debugValue, out uint nonfaded);
@@ -411,8 +410,8 @@ public class ConfigUi : Window, IDisposable
                 lastSearchTime = currentTime;
                 itemSearchResults = !string.IsNullOrEmpty(searchResultsQuery)
                     ? itemSheet.Where(x =>
-                            x.Name.ToString().Contains(searchResultsQuery,
-                                StringComparison.OrdinalIgnoreCase))
+                            x.Name.ToString().Contains(searchResultsQuery, StringComparison.OrdinalIgnoreCase) &&
+                            LazyLoot.Config.Restrictions.Items.All(i => i.Id != x.RowId.ToString()))
                         .ToArray()
                     : [];
             }
@@ -569,7 +568,8 @@ public class ConfigUi : Window, IDisposable
                 dutySearchResults = !string.IsNullOrEmpty(searchResultsQuery)
                     ? dutySheet.Where(x =>
                             x.Name.ToString().Contains(searchResultsQuery,
-                                StringComparison.OrdinalIgnoreCase))
+                                StringComparison.OrdinalIgnoreCase) &&
+                            LazyLoot.Config.Restrictions.Duties.All(i => i.Id != x.RowId.ToString()))
                         .ToArray()
                     : [];
             }
