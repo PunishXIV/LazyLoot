@@ -313,7 +313,7 @@ public class ConfigUi : Window, IDisposable
             for (var i = 0; i < LazyLoot.Config.Restrictions.Items.Count; i++)
             {
                 var item = LazyLoot.Config.Restrictions.Items[i];
-
+                var restrictedItem = Svc.Data.GetExcelSheet<Item>().GetRow(item.Id);
                 ImGui.TableNextRow();
                 ImGui.TableNextColumn();
                 var enabled = item.Enabled;
@@ -325,59 +325,40 @@ public class ConfigUi : Window, IDisposable
                 }
 
                 ImGui.TableNextColumn();
-                if (uint.TryParse(item.Icon, out var iconId))
-                {
-                    var icon = GetItemIcon(iconId);
-                    if (icon != null)
-                    {
-                        CenterText();
-                        ImGui.Image(icon.ImGuiHandle, new Vector2(24, 24));
-                    }
-                }
+                CenterText();
+                ImGui.Image(GetItemIcon(restrictedItem.Icon).ImGuiHandle, new Vector2(24, 24));
 
                 ImGui.TableNextColumn();
-                ImGui.Text(item.Name);
+                ImGui.Text(restrictedItem.Name.ToString());
                 ImGui.TableNextColumn();
                 CenterText();
-                if (ImGui.RadioButton($"##need{item.Id}", item.Need))
+                if (ImGui.RadioButton($"##need{item.Id}", item.RollRule == RollResult.Needed))
                 {
-                    item.Need = true;
-                    item.Greed = false;
-                    item.Pass = false;
-                    item.DoNothing = false;
+                    item.RollRule = RollResult.Needed;
                     LazyLoot.Config.Save();
                 }
 
                 ImGui.TableNextColumn();
                 CenterText();
-                if (ImGui.RadioButton($"##greed{item.Id}", item.Greed))
+                if (ImGui.RadioButton($"##greed{item.Id}", item.RollRule == RollResult.Greeded))
                 {
-                    item.Need = false;
-                    item.Greed = true;
-                    item.Pass = false;
-                    item.DoNothing = false;
+                    item.RollRule = RollResult.Greeded;
                     LazyLoot.Config.Save();
                 }
 
                 ImGui.TableNextColumn();
                 CenterText();
-                if (ImGui.RadioButton($"##pass{item.Id}", item.Pass))
+                if (ImGui.RadioButton($"##pass{item.Id}", item.RollRule == RollResult.Passed))
                 {
-                    item.Need = false;
-                    item.Greed = false;
-                    item.Pass = true;
-                    item.DoNothing = false;
+                    item.RollRule = RollResult.Passed;
                     LazyLoot.Config.Save();
                 }
 
                 ImGui.TableNextColumn();
                 CenterText();
-                if (ImGui.RadioButton($"##doNothing{item.Id}", item.DoNothing))
+                if (ImGui.RadioButton($"##doNothing{item.Id}", item.RollRule == RollResult.UnAwarded))
                 {
-                    item.Need = false;
-                    item.Greed = false;
-                    item.Pass = false;
-                    item.DoNothing = true;
+                    item.RollRule = RollResult.UnAwarded;
                     LazyLoot.Config.Save();
                 }
 
@@ -411,7 +392,7 @@ public class ConfigUi : Window, IDisposable
                 itemSearchResults = !string.IsNullOrEmpty(searchResultsQuery)
                     ? itemSheet.Where(x =>
                             x.Name.ToString().Contains(searchResultsQuery, StringComparison.OrdinalIgnoreCase) &&
-                            LazyLoot.Config.Restrictions.Items.All(i => i.Id != x.RowId.ToString()))
+                            LazyLoot.Config.Restrictions.Items.All(i => i.Id != x.RowId))
                         .ToArray()
                     : [];
             }
@@ -429,17 +410,11 @@ public class ConfigUi : Window, IDisposable
                             var selectedItemId = item.RowId;
                             var selectedItem = itemSheet.GetRow(selectedItemId);
                             var selectedItemName = selectedItem.Name.ToString();
-                            var newItem = new RestrictionItem
+                            var newItem = new CustomRestriction
                             {
-                                Id = selectedItem.RowId.ToString(),
+                                Id = selectedItem.RowId,
                                 Enabled = true,
-                                Name = selectedItemName,
-                                Icon = selectedItem.Icon
-                                    .ToString(),
-                                Need = false,
-                                Greed = false,
-                                Pass = false,
-                                DoNothing = true
+                                RollRule = RollResult.UnAwarded
                             };
                             LazyLoot.Config.Restrictions.Items.Add(newItem);
                             LazyLoot.Config.Save();
@@ -470,10 +445,10 @@ public class ConfigUi : Window, IDisposable
             for (var i = 0; i < LazyLoot.Config.Restrictions.Duties.Count; i++)
             {
                 var duty = LazyLoot.Config.Restrictions.Duties[i];
-
+                var restrictedDuty = Svc.Data.GetExcelSheet<ContentFinderCondition>().GetRow(duty.Id);
+                var enabled = duty.Enabled;
                 ImGui.TableNextRow();
                 ImGui.TableNextColumn();
-                var enabled = duty.Enabled;
                 CenterText();
                 if (ImGui.Checkbox($"##{duty.Id}", ref enabled))
                 {
@@ -482,59 +457,41 @@ public class ConfigUi : Window, IDisposable
                 }
 
                 ImGui.TableNextColumn();
-                if (uint.TryParse(duty.Icon, out var iconId))
-                {
-                    var icon = GetItemIcon(iconId);
-                    if (icon != null)
-                    {
-                        CenterText();
-                        ImGui.Image(icon.ImGuiHandle, new Vector2(24, 24));
-                    }
-                }
+                CenterText();
+                ImGui.Image(GetItemIcon(restrictedDuty.ContentType.Value.Icon).ImGuiHandle, new Vector2(24, 24));
 
                 ImGui.TableNextColumn();
-                ImGui.Text(duty.Name);
+                ImGui.Text(restrictedDuty.Name.ToString());
+
                 ImGui.TableNextColumn();
                 CenterText();
-                if (ImGui.RadioButton($"##need{duty.Id}", duty.Need))
+                if (ImGui.RadioButton($"##need{duty.Id}", duty.RollRule == RollResult.Needed))
                 {
-                    duty.Need = true;
-                    duty.Greed = false;
-                    duty.Pass = false;
-                    duty.DoNothing = false;
+                    duty.RollRule = RollResult.Needed;
                     LazyLoot.Config.Save();
                 }
 
                 ImGui.TableNextColumn();
                 CenterText();
-                if (ImGui.RadioButton($"##greed{duty.Id}", duty.Greed))
+                if (ImGui.RadioButton($"##greed{duty.Id}", duty.RollRule == RollResult.Greeded))
                 {
-                    duty.Need = false;
-                    duty.Greed = true;
-                    duty.Pass = false;
-                    duty.DoNothing = false;
+                    duty.RollRule = RollResult.Greeded;
                     LazyLoot.Config.Save();
                 }
 
                 ImGui.TableNextColumn();
                 CenterText();
-                if (ImGui.RadioButton($"##pass{duty.Id}", duty.Pass))
+                if (ImGui.RadioButton($"##pass{duty.Id}", duty.RollRule == RollResult.Passed))
                 {
-                    duty.Need = false;
-                    duty.Greed = false;
-                    duty.Pass = true;
-                    duty.DoNothing = false;
+                    duty.RollRule = RollResult.Passed;
                     LazyLoot.Config.Save();
                 }
 
                 ImGui.TableNextColumn();
                 CenterText();
-                if (ImGui.RadioButton($"##doNothing{duty.Id}", duty.DoNothing))
+                if (ImGui.RadioButton($"##doNothing{duty.Id}", duty.RollRule == RollResult.UnAwarded))
                 {
-                    duty.Need = false;
-                    duty.Greed = false;
-                    duty.Pass = false;
-                    duty.DoNothing = true;
+                    duty.RollRule = RollResult.UnAwarded;
                     LazyLoot.Config.Save();
                 }
 
@@ -569,7 +526,7 @@ public class ConfigUi : Window, IDisposable
                     ? dutySheet.Where(x =>
                             x.Name.ToString().Contains(searchResultsQuery,
                                 StringComparison.OrdinalIgnoreCase) &&
-                            LazyLoot.Config.Restrictions.Duties.All(i => i.Id != x.RowId.ToString()))
+                            LazyLoot.Config.Restrictions.Duties.All(i => i.Id != x.RowId))
                         .ToArray()
                     : [];
             }
@@ -588,16 +545,11 @@ public class ConfigUi : Window, IDisposable
                             var selectedDutyId = duty.RowId;
                             var selectedDuty = dutySheet.GetRow(selectedDutyId);
                             var selectedDutyName = selectedDuty.Name.ToString();
-                            var newDuty = new RestrictionDuty
+                            var newDuty = new CustomRestriction
                             {
-                                Id = selectedDuty.RowId.ToString(),
+                                Id = selectedDuty.RowId,
                                 Enabled = true,
-                                Name = selectedDutyName,
-                                Icon = selectedDuty.ContentType.Value.Icon.ToString(),
-                                Need = false,
-                                Greed = false,
-                                Pass = false,
-                                DoNothing = true
+                                RollRule = RollResult.UnAwarded
                             };
                             LazyLoot.Config.Restrictions.Duties.Add(newDuty);
                             LazyLoot.Config.Save();

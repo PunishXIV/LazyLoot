@@ -155,43 +155,37 @@ internal static class Roller
 
         // Here, we will check for the specific rules for items.
         var itemCustomRestriction =
-            LazyLoot.Config.Restrictions.Items.FirstOrDefault(x => x.Id == loot.ItemId.ToString());
+            LazyLoot.Config.Restrictions.Items.FirstOrDefault(x => x.Id == loot.ItemId);
         if (itemCustomRestriction is { Enabled: true })
         {
             if (LazyLoot.Config.DiagnosticsMode)
             {
-                var action = itemCustomRestriction.DoNothing ? "being ignored" :
-                    itemCustomRestriction.Pass ? "passing" :
-                    itemCustomRestriction.Greed ? "greeding" :
-                    itemCustomRestriction.Need ? "needing" : "passing";
+                var action = itemCustomRestriction.RollRule == RollResult.UnAwarded ? "being ignored" :
+                    itemCustomRestriction.RollRule == RollResult.Passed ? "passing" :
+                    itemCustomRestriction.RollRule == RollResult.Greeded ? "greeding" :
+                    itemCustomRestriction.RollRule == RollResult.Needed ? "needing" : "passing";
                 Svc.Log.Debug($"{lootItem.Value.Name.ToString()} is {action}. [Item Custom Restriction]");
             }
-            if (itemCustomRestriction.DoNothing) return RollResult.UnAwarded;
-            if (itemCustomRestriction.Pass) return RollResult.Passed;
-            if (itemCustomRestriction.Greed) return RollResult.Greeded;
-            if (itemCustomRestriction.Need) return RollResult.Needed;
+            return itemCustomRestriction.RollRule;
         }
         
         // Here, we will check for the specific rules for the Duty.
         var contentFinderInfo = Svc.Data.GetExcelSheet<ContentFinderCondition>()
             .GetRow(GameMain.Instance()->CurrentContentFinderConditionId);
         var dutyCustomRestriction =
-            LazyLoot.Config.Restrictions.Duties.FirstOrDefault(x => x.Id == contentFinderInfo.RowId.ToString());
+            LazyLoot.Config.Restrictions.Duties.FirstOrDefault(x => x.Id == contentFinderInfo.RowId);
         if (dutyCustomRestriction is { Enabled: true })
         {
             if (LazyLoot.Config.DiagnosticsMode)
             {
-                var action = dutyCustomRestriction.DoNothing ? "being ignored" :
-                    dutyCustomRestriction.Pass ? "passing" :
-                    dutyCustomRestriction.Greed ? "greeding" :
-                    dutyCustomRestriction.Need ? "needing" : "passing";
+                var action = dutyCustomRestriction.RollRule == RollResult.UnAwarded ? "being ignored" :
+                    dutyCustomRestriction.RollRule == RollResult.Passed ? "passing" :
+                    dutyCustomRestriction.RollRule == RollResult.Greeded ? "greeding" :
+                    dutyCustomRestriction.RollRule == RollResult.Needed ? "needing" : "passing";
                 Svc.Log.Debug(
                     $"{lootItem.Value.Name.ToString()} is {action} due to being in {contentFinderInfo.Name}. [Duty Custom Restriction]");
             }
-            if (dutyCustomRestriction.DoNothing) return RollResult.UnAwarded;
-            if (dutyCustomRestriction.Pass) return RollResult.Passed;
-            if (dutyCustomRestriction.Greed) return RollResult.Greeded;
-            if (dutyCustomRestriction.Need) return RollResult.Needed;
+            return dutyCustomRestriction.RollRule;
         }
 
         if (orchId.Count > 0 && orchId.All(x => IsItemUnlocked(x)))

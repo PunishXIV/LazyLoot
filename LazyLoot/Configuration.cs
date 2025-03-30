@@ -2,38 +2,22 @@
 using System.Collections.Generic;
 using Dalamud.Configuration;
 using ECommons.DalamudServices;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 
 namespace LazyLoot
 {
     
     public class RestrictionGroup
     {
-        public List<RestrictionItem> Items { get; set; } = new();
-        public List<RestrictionDuty> Duties { get; set; } = new();
+        public List<CustomRestriction> Items { get; set; } = [];
+        public List<CustomRestriction> Duties { get; set; } = [];
     }
     
-    public class RestrictionItem
+    public class CustomRestriction
     {
-        public string Id { get; set; } = Guid.NewGuid().ToString();
-        public bool Enabled { get; set; } = false;
-        public string Icon { get; set; } = "Icon";
-        public string Name { get; set; } = "Item";
-        public bool Need { get; set; } = false;
-        public bool Greed { get; set; } = false;
-        public bool Pass { get; set; } = false;
-        public bool DoNothing { get; set; } = true;
-    }
-    
-    public class RestrictionDuty
-    {
-        public string Id { get; set; } = Guid.NewGuid().ToString();
-        public bool Enabled { get; set; } = false;
-        public string Icon { get; set; } = "Icon";
-        public string Name { get; set; } = "Duty";
-        public bool Need { get; set; } = false;
-        public bool Greed { get; set; } = false;
-        public bool Pass { get; set; } = false;
-        public bool DoNothing { get; set; } = true;
+        public uint Id { get; set; }
+        public bool Enabled { get; set; }
+        public RollResult RollRule { get; set; }
     }
     
     public class Configuration : IPluginConfiguration
