@@ -9,32 +9,56 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.InteropServices;
+using ECommons;
 
 namespace LazyLoot;
 
 internal static class Roller
 {
     unsafe delegate bool RollItemRaw(Loot* lootIntPtr, RollResult option, uint lootItemIndex);
+
     static RollItemRaw _rollItemRaw;
 
     static uint _itemId = 0, _index = 0;
+    static HashSet<uint> _ignoredIndexes = new();
+    
+
     public static void Clear()
     {
         _itemId = _index = 0;
+        _ignoredIndexes.Clear();
     }
+    
+    public static bool IsIndexIgnored(uint index) => _ignoredIndexes.Contains(index);
+    
+    public static void AddIgnoredIndex(uint index) => _ignoredIndexes.Add(index);
 
     public static bool RollOneItem(RollResult option, ref int need, ref int greed, ref int pass)
     {
         if (!GetNextLootItem(out var index, out var loot)) return false;
 
+        var playerRestriction = GetPlayerRestrict(loot);
+        
         //Make option valid.
-        option = ResultMerge(option, GetRestrictResult(loot), GetPlayerRestrict(loot));
-
+        option = ResultMerge(option, GetRestrictResult(loot), playerRestriction);
+        
+        // Do nothing if set to do nothing (if the player requested too)
+        if (playerRestriction == RollResult.UnAwarded)
+        {
+            if (LazyLoot.Config.DiagnosticsMode)
+                Svc.Log.Debug($"Is UnAwarded: {loot.ItemId} {option}");
+            _itemId = loot.ItemId;
+            _index = index;
+            AddIgnoredIndex(index);
+            return true;
+        }
+        
         Svc.Log.Debug($"{loot.ItemId} {option}");
         if (_itemId == loot.ItemId && index == _index)
         {
             if (LazyLoot.Config.DiagnosticsMode && !LazyLoot.Config.NoPassEmergency)
-                DuoLog.Debug($"{Svc.Data.GetExcelSheet<Item>().GetRow(loot.ItemId).Name.ToString()} has failed to roll for some reason. Passing for safety. [Emergency pass]");
+                DuoLog.Debug(
+                    $"{Svc.Data.GetExcelSheet<Item>().GetRow(loot.ItemId).Name.ToString()} has failed to roll for some reason. Passing for safety. [Emergency pass]");
 
             if (!LazyLoot.Config.NoPassEmergency)
             {
@@ -50,6 +74,7 @@ internal static class Roller
                         pass--;
                         break;
                 }
+
                 option = RollResult.Passed;
             }
         }
@@ -70,6 +95,7 @@ internal static class Roller
                 pass++;
                 break;
         }
+
         return true;
     }
 
@@ -103,7 +129,8 @@ internal static class Roller
 
         return ResultMerge(stateMax, ruleMax);
     }
-    private unsafe static RollResult GetPlayerRestrict(LootItem loot)
+
+    private static unsafe RollResult GetPlayerRestrict(LootItem loot)
     {
         var lootItem = Svc.Data.GetExcelSheet<Item>().GetRowOrDefault(loot.ItemId);
 
@@ -112,16 +139,59 @@ internal static class Roller
         if (lootItem == null)
         {
             if (LazyLoot.Config.DiagnosticsMode)
-                DuoLog.Debug($"Passing due to unknown item? Please give this ID to the developers: {loot.ItemId} [Unknown ID]");
+                DuoLog.Debug(
+                    $"Passing due to unknown item? Please give this ID to the developers: {loot.ItemId} [Unknown ID]");
             return RollResult.Passed;
         }
 
         if (lootItem.Value.IsUnique && ItemCount(loot.ItemId) > 0)
         {
             if (LazyLoot.Config.DiagnosticsMode)
-                DuoLog.Debug($"{lootItem.Value.Name.ToString()} has been passed due to being unique and you already possess one. [Unique Item]");
+                DuoLog.Debug(
+                    $"{lootItem.Value.Name.ToString()} has been passed due to being unique and you already possess one. [Unique Item]");
 
             return RollResult.Passed;
+        }
+
+        // Here, we will check for the specific rules for items.
+        var itemCustomRestriction =
+            LazyLoot.Config.Restrictions.Items.FirstOrDefault(x => x.Id == loot.ItemId.ToString());
+        if (itemCustomRestriction != null)
+        {
+            if (LazyLoot.Config.DiagnosticsMode)
+            {
+                var action = itemCustomRestriction.DoNothing ? "being ignored" :
+                    itemCustomRestriction.Pass ? "passing" :
+                    itemCustomRestriction.Greed ? "greeding" :
+                    itemCustomRestriction.Need ? "needing" : "passing";
+                Svc.Log.Debug($"{lootItem.Value.Name.ToString()} is {action}. [Item Custom Restriction]");
+            }
+            if (itemCustomRestriction.DoNothing) return RollResult.UnAwarded;
+            if (itemCustomRestriction.Pass) return RollResult.Passed;
+            if (itemCustomRestriction.Greed) return RollResult.Greeded;
+            if (itemCustomRestriction.Need) return RollResult.Needed;
+        }
+        
+        // Here, we will check for the specific rules for the Duty.
+        var contentFinderInfo = Svc.Data.GetExcelSheet<ContentFinderCondition>()
+            .GetRow(GameMain.Instance()->CurrentContentFinderConditionId);
+        var dutyCustomRestriction =
+            LazyLoot.Config.Restrictions.Duties.FirstOrDefault(x => x.Id == contentFinderInfo.RowId.ToString());
+        if (dutyCustomRestriction != null)
+        {
+            if (LazyLoot.Config.DiagnosticsMode)
+            {
+                var action = dutyCustomRestriction.DoNothing ? "being ignored" :
+                    dutyCustomRestriction.Pass ? "passing" :
+                    dutyCustomRestriction.Greed ? "greeding" :
+                    dutyCustomRestriction.Need ? "needing" : "passing";
+                Svc.Log.Debug(
+                    $"{lootItem.Value.Name.ToString()} is {action} due to being in {contentFinderInfo.Name}. [Duty Custom Restriction]");
+            }
+            if (dutyCustomRestriction.DoNothing) return RollResult.UnAwarded;
+            if (dutyCustomRestriction.Pass) return RollResult.Passed;
+            if (dutyCustomRestriction.Greed) return RollResult.Greeded;
+            if (dutyCustomRestriction.Need) return RollResult.Needed;
         }
 
         if (orchId.Count > 0 && orchId.All(x => IsItemUnlocked(x)))
@@ -129,7 +199,8 @@ internal static class Roller
             if (LazyLoot.Config.RestrictionIgnoreItemUnlocked)
             {
                 if (LazyLoot.Config.DiagnosticsMode)
-                    DuoLog.Debug($@"{lootItem.Value.Name.ToString()} has been passed due to being unlocked and you have ""Pass on all items already unlocked"" enabled. [Pass All Unlocked]");
+                    DuoLog.Debug(
+                        $@"{lootItem.Value.Name.ToString()} has been passed due to being unlocked and you have ""Pass on all items already unlocked"" enabled. [Pass All Unlocked]");
 
                 return RollResult.Passed;
             }
@@ -138,7 +209,8 @@ internal static class Roller
                 && lootItem.Value.FilterGroup == 12 && lootItem.Value.ItemUICategory.RowId == 94)
             {
                 if (LazyLoot.Config.DiagnosticsMode)
-                    DuoLog.Debug($@"{lootItem.Value.Name.ToString()} has been passed due to being unlocked and you have ""Pass on unlocked Faded Copies"" enabled. [Pass Faded Copies]");
+                    DuoLog.Debug(
+                        $@"{lootItem.Value.Name.ToString()} has been passed due to being unlocked and you have ""Pass on unlocked Faded Copies"" enabled. [Pass Faded Copies]");
 
                 return RollResult.Passed;
             }
@@ -149,7 +221,8 @@ internal static class Roller
             if (LazyLoot.Config.RestrictionIgnoreItemUnlocked)
             {
                 if (LazyLoot.Config.DiagnosticsMode)
-                    DuoLog.Debug($@"{lootItem.Value.Name.ToString()} has been passed due to being unlocked and you have ""Pass on all items already unlocked"" enabled. [Pass All Unlocked]");
+                    DuoLog.Debug(
+                        $@"{lootItem.Value.Name.ToString()} has been passed due to being unlocked and you have ""Pass on all items already unlocked"" enabled. [Pass All Unlocked]");
 
                 return RollResult.Passed;
             }
@@ -157,7 +230,8 @@ internal static class Roller
             if (LazyLoot.Config.RestrictionIgnoreMounts && lootItem.Value.ItemAction.Value.Type == 1322)
             {
                 if (LazyLoot.Config.DiagnosticsMode)
-                    DuoLog.Debug($@"{lootItem.Value.Name.ToString()} has been passed due to being unlocked and you have ""Pass on unlocked Mounts"" enabled. [Pass Mounts]");
+                    DuoLog.Debug(
+                        $@"{lootItem.Value.Name.ToString()} has been passed due to being unlocked and you have ""Pass on unlocked Mounts"" enabled. [Pass Mounts]");
 
                 return RollResult.Passed;
             }
@@ -165,7 +239,8 @@ internal static class Roller
             if (LazyLoot.Config.RestrictionIgnoreMinions && lootItem.Value.ItemAction.Value.Type == 853)
             {
                 if (LazyLoot.Config.DiagnosticsMode)
-                    DuoLog.Debug($@"{lootItem.Value.Name.ToString()} has been passed due to being unlocked and you have ""Pass on unlocked Minions"" enabled. [Pass Minions]");
+                    DuoLog.Debug(
+                        $@"{lootItem.Value.Name.ToString()} has been passed due to being unlocked and you have ""Pass on unlocked Minions"" enabled. [Pass Minions]");
 
                 return RollResult.Passed;
             }
@@ -174,7 +249,8 @@ internal static class Roller
                 && lootItem.Value.ItemAction.Value.Type == 1013)
             {
                 if (LazyLoot.Config.DiagnosticsMode)
-                    DuoLog.Debug($@"{lootItem.Value.Name.ToString()} has been passed due to being unlocked and you have ""Pass on unlocked Bardings"" enabled. [Pass Bardings]");
+                    DuoLog.Debug(
+                        $@"{lootItem.Value.Name.ToString()} has been passed due to being unlocked and you have ""Pass on unlocked Bardings"" enabled. [Pass Bardings]");
 
                 return RollResult.Passed;
             }
@@ -183,7 +259,8 @@ internal static class Roller
                 && lootItem.Value.ItemAction.Value.Type == 2633)
             {
                 if (LazyLoot.Config.DiagnosticsMode)
-                    DuoLog.Debug($@"{lootItem.Value.Name.ToString()} has been passed due to being unlocked and you have ""Pass on unlocked Emotes and Hairstyles"" enabled. [Pass Emotes/Hairstyles]");
+                    DuoLog.Debug(
+                        $@"{lootItem.Value.Name.ToString()} has been passed due to being unlocked and you have ""Pass on unlocked Emotes and Hairstyles"" enabled. [Pass Emotes/Hairstyles]");
 
                 return RollResult.Passed;
             }
@@ -192,7 +269,8 @@ internal static class Roller
                 && lootItem.Value.ItemAction.Value.Type == 3357)
             {
                 if (LazyLoot.Config.DiagnosticsMode)
-                    DuoLog.Debug($@"{lootItem.Value.Name.ToString()} has been passed due to being unlocked and you have ""Pass on unlocked Triple Triad cards"" enabled. [Pass TTCards]");
+                    DuoLog.Debug(
+                        $@"{lootItem.Value.Name.ToString()} has been passed due to being unlocked and you have ""Pass on unlocked Triple Triad cards"" enabled. [Pass TTCards]");
 
                 return RollResult.Passed;
             }
@@ -201,7 +279,8 @@ internal static class Roller
                 && lootItem.Value.ItemAction.Value.Type == 25183)
             {
                 if (LazyLoot.Config.DiagnosticsMode)
-                    DuoLog.Debug($@"{lootItem.Value.Name.ToString()} has been passed due to being unlocked and you have ""Pass on unlocked Orchestrion Rolls"" enabled. [Pass Orchestrion]");
+                    DuoLog.Debug(
+                        $@"{lootItem.Value.Name.ToString()} has been passed due to being unlocked and you have ""Pass on unlocked Orchestrion Rolls"" enabled. [Pass Orchestrion]");
 
                 return RollResult.Passed;
             }
@@ -211,11 +290,13 @@ internal static class Roller
         {
             if (lootItem.Value.Rarity > 1 && lootItem.Value.PriceLow > 0 && lootItem.Value.ClassJobCategory.RowId > 0)
             {
-                var gcSealValue = Svc.Data.Excel.GetSheet<GCSupplyDutyReward>()?.GetRow(lootItem.Value.LevelItem.RowId).SealsExpertDelivery;
+                var gcSealValue = Svc.Data.Excel.GetSheet<GCSupplyDutyReward>()?.GetRow(lootItem.Value.LevelItem.RowId)
+                    .SealsExpertDelivery;
                 if (gcSealValue < LazyLoot.Config.RestrictionSealsAmnt)
                 {
                     if (LazyLoot.Config.DiagnosticsMode)
-                        DuoLog.Debug($@"{lootItem.Value.Name.ToString()} has been passed due to selling for less than {LazyLoot.Config.RestrictionSealsAmnt} seals. [Pass Seals]");
+                        DuoLog.Debug(
+                            $@"{lootItem.Value.Name.ToString()} has been passed due to selling for less than {LazyLoot.Config.RestrictionSealsAmnt} seals. [Pass Seals]");
 
                     return RollResult.Passed;
                 }
@@ -227,12 +308,17 @@ internal static class Roller
             // Check if the loot item level is below the average level of the user job
             if (LazyLoot.Config.RestrictionLootLowerThanJobIlvl && loot.RollState == RollState.UpToNeed)
             {
-                if (lootItem.Value.LevelItem.RowId < Utils.GetPlayerIlevel() - LazyLoot.Config.RestrictionLootLowerThanJobIlvlTreshold)
+                if (lootItem.Value.LevelItem.RowId <
+                    Utils.GetPlayerIlevel() - LazyLoot.Config.RestrictionLootLowerThanJobIlvlTreshold)
                 {
-                    if (LazyLoot.Config.DiagnosticsMode && LazyLoot.Config.RestrictionLootLowerThanJobIlvlRollState != 0)
-                        DuoLog.Debug($@"{lootItem.Value.Name.ToString()} has been passed due to being below your average item level and you have set to pass items below your average job item level. [Pass Item Lower Than Average iLevel]");
+                    if (LazyLoot.Config.DiagnosticsMode &&
+                        LazyLoot.Config.RestrictionLootLowerThanJobIlvlRollState != 0)
+                        DuoLog.Debug(
+                            $@"{lootItem.Value.Name.ToString()} has been passed due to being below your average item level and you have set to pass items below your average job item level. [Pass Item Lower Than Average iLevel]");
 
-                    return LazyLoot.Config.RestrictionLootLowerThanJobIlvlRollState == 0 ? RollResult.Greeded : RollResult.Passed;
+                    return LazyLoot.Config.RestrictionLootLowerThanJobIlvlRollState == 0
+                        ? RollResult.Greeded
+                        : RollResult.Passed;
                 }
             }
 
@@ -240,7 +326,8 @@ internal static class Roller
                 && lootItem.Value.LevelItem.RowId < LazyLoot.Config.RestrictionIgnoreItemLevelBelowValue)
             {
                 if (LazyLoot.Config.DiagnosticsMode)
-                    DuoLog.Debug($@"{lootItem.Value.Name.ToString()} has been passed due to having ""Pass on items with an item level below"" enabled and {lootItem.Value.LevelItem.RowId} is less than {LazyLoot.Config.RestrictionIgnoreItemLevelBelowValue}. [Pass Item Level]");
+                    DuoLog.Debug(
+                        $@"{lootItem.Value.Name.ToString()} has been passed due to having ""Pass on items with an item level below"" enabled and {lootItem.Value.LevelItem.RowId} is less than {LazyLoot.Config.RestrictionIgnoreItemLevelBelowValue}. [Pass Item Level]");
 
                 return RollResult.Passed;
             }
@@ -250,7 +337,8 @@ internal static class Roller
             {
                 var lootItemSlot = lootItem.Value.EquipSlotCategory.RowId;
                 var itemsToVerify = new List<uint>();
-                InventoryContainer* equippedItems = InventoryManager.Instance()->GetInventoryContainer(InventoryType.EquippedItems);
+                InventoryContainer* equippedItems =
+                    InventoryManager.Instance()->GetInventoryContainer(InventoryType.EquippedItems);
                 for (int i = 0; i < equippedItems->Size; i++)
                 {
                     InventoryItem* equippedItem = equippedItems->GetInventorySlot(i);
@@ -260,13 +348,17 @@ internal static class Roller
                     // We gather all the iLvls of the equipped items in the same slot (if any)
                     itemsToVerify.Add(equippedItemData.Value.LevelItem.RowId);
                 }
+
                 // And we check if from the items gathered, if the lowest is higher than the droped item, we follow the rules defined by the user
                 if (itemsToVerify.Count > 0 && itemsToVerify.Min() > lootItem.Value.LevelItem.RowId)
                 {
                     if (LazyLoot.Config.DiagnosticsMode && LazyLoot.Config.RestrictionLootIsJobUpgradeRollState != 0)
-                        DuoLog.Debug($@"{lootItem.Value.Name.ToString()} has been passed due to being below the level of your current equipped item level and you have set to pass items below the level of your equipped item. [Pass Item if equipped is of higher level]");
+                        DuoLog.Debug(
+                            $@"{lootItem.Value.Name.ToString()} has been passed due to being below the level of your current equipped item level and you have set to pass items below the level of your equipped item. [Pass Item if equipped is of higher level]");
 
-                    return LazyLoot.Config.RestrictionLootIsJobUpgradeRollState == 0 ? RollResult.Greeded : RollResult.Passed;
+                    return LazyLoot.Config.RestrictionLootIsJobUpgradeRollState == 0
+                        ? RollResult.Greeded
+                        : RollResult.Passed;
                 }
             }
 
@@ -274,7 +366,8 @@ internal static class Roller
                 && loot.RollState != RollState.UpToNeed)
             {
                 if (LazyLoot.Config.DiagnosticsMode)
-                    DuoLog.Debug($@"{lootItem.Value.Name.ToString()} has been passed due to having ""Pass on items I can't use with current job"" and this item cannot be used with your current job. [Pass Other Job]");
+                    DuoLog.Debug(
+                        $@"{lootItem.Value.Name.ToString()} has been passed due to having ""Pass on items I can't use with current job"" and this item cannot be used with your current job. [Pass Other Job]");
 
                 return RollResult.Passed;
             }
@@ -286,7 +379,8 @@ internal static class Roller
             && !(Player.Object?.ClassJob.RowId is 1 or 19))
         {
             if (LazyLoot.Config.DiagnosticsMode)
-                DuoLog.Debug($@"{lootItem.Value.Name.ToString()} has been passed due to having ""Pass on items I can't use with current job"" and this item cannot be used with your current job. [Pass Other Job (PLD Sets)]");
+                DuoLog.Debug(
+                    $@"{lootItem.Value.Name.ToString()} has been passed due to having ""Pass on items I can't use with current job"" and this item cannot be used with your current job. [Pass Other Job (PLD Sets)]");
 
             return RollResult.Passed;
         }
@@ -302,26 +396,28 @@ internal static class Roller
         {
             if (lumina.Value.FilterGroup == 12 && lumina.Value.ItemUICategory.RowId == 94)
             {
-                var recipe = Svc.Data.GetExcelSheet<Recipe>()?.Where(x => x.Ingredient.Any(y => y.RowId == lumina.Value.RowId)).Select(x => x.ItemResult.Value).FirstOrDefault();
+                var recipe = Svc.Data.GetExcelSheet<Recipe>()
+                    ?.Where(x => x.Ingredient.Any(y => y.RowId == lumina.Value.RowId)).Select(x => x.ItemResult.Value)
+                    .FirstOrDefault();
                 if (recipe != null)
                 {
                     if (LazyLoot.Config.DiagnosticsMode)
-                        DuoLog.Debug($"Updating Faded Copy {lumina.Value.Name} ({itemId}) to Non-Faded {recipe.Value.Name} ({recipe.Value.RowId})");
+                        DuoLog.Debug(
+                            $"Updating Faded Copy {lumina.Value.Name} ({itemId}) to Non-Faded {recipe.Value.Name} ({recipe.Value.RowId})");
                     orchId.Add(recipe.Value.RowId);
                     return;
                 }
-
             }
         }
     }
 
     private static RollResult ResultMerge(params RollResult[] results)
-       => results.Max() switch
-       {
-           RollResult.Needed => RollResult.Needed,
-           RollResult.Greeded => RollResult.Greeded,
-           _ => RollResult.Passed,
-       };
+        => results.Max() switch
+        {
+            RollResult.Needed => RollResult.Needed,
+            RollResult.Greeded => RollResult.Greeded,
+            _ => RollResult.Passed,
+        };
 
 
     private static unsafe bool GetNextLootItem(out uint i, out LootItem loot)
@@ -329,6 +425,7 @@ internal static class Roller
         var span = Loot.Instance()->Items;
         for (i = 0; i < span.Length; i++)
         {
+            if(IsIndexIgnored(i)) continue;
             loot = span[(int)i];
             if (loot.ItemId >= 1000000) loot.ItemId -= 1000000;
             if (loot.ChestObjectId is 0 or 0xE0000000) continue;
@@ -338,14 +435,15 @@ internal static class Roller
             if (loot.LootMode is LootMode.LootMasterGreedOnly or LootMode.Unavailable) continue;
             if (LazyLoot.Config.RestrictionWeeklyLockoutItems)
             {
-                var contentFinderInfo = Svc.Data.GetExcelSheet<ContentFinderCondition>().GetRow(GameMain.Instance()->CurrentContentFinderConditionId);
-                var instanceInfo = Svc.Data.GetExcelSheet<Lumina.Excel.Sheets.InstanceContent>().GetRow(contentFinderInfo.Content.RowId);
-                if (contentFinderInfo.RowId is >= 1019 and <= 1026) continue; //We really need a better solution
+                var contentFinderInfo = Svc.Data.GetExcelSheet<ContentFinderCondition>()
+                    .GetRow(GameMain.Instance()->CurrentContentFinderConditionId);
+                var instanceInfo = Svc.Data.GetExcelSheet<Lumina.Excel.Sheets.InstanceContent>()
+                    .GetRow(contentFinderInfo.Content.RowId);
+                if (contentFinderInfo.RowId is >= 1019 and <= 1026) continue;
 
                 if (instanceInfo.WeekRestriction == 1)
                 {
                     var item = Svc.Data.GetExcelSheet<Item>().GetRow(loot.ItemId);
-
                     if (item.ItemAction.Value.Type != 853 &&
                         item.ItemAction.Value.Type != 1013 &&
                         item.ItemAction.Value.Type != 2633 &&
@@ -370,7 +468,9 @@ internal static class Roller
     {
         try
         {
-            _rollItemRaw ??= Marshal.GetDelegateForFunctionPointer<RollItemRaw>(Svc.SigScanner.ScanText("41 83 F8 ?? 0F 83 ?? ?? ?? ?? 48 89 5C 24 08"));
+            _rollItemRaw ??=
+                Marshal.GetDelegateForFunctionPointer<RollItemRaw>(
+                    Svc.SigScanner.ScanText("41 83 F8 ?? 0F 83 ?? ?? ?? ?? 48 89 5C 24 08"));
             _rollItemRaw?.Invoke(Loot.Instance(), option, index);
         }
         catch (Exception ex)

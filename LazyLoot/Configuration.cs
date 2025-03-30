@@ -1,8 +1,41 @@
-﻿using Dalamud.Configuration;
+﻿using System;
+using System.Collections.Generic;
+using Dalamud.Configuration;
 using ECommons.DalamudServices;
 
 namespace LazyLoot
 {
+    
+    public class RestrictionGroup
+    {
+        public List<RestrictionItem> Items { get; set; } = new();
+        public List<RestrictionDuty> Duties { get; set; } = new();
+    }
+    
+    public class RestrictionItem
+    {
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public bool Enabled { get; set; } = false;
+        public string Icon { get; set; } = "Icon";
+        public string Name { get; set; } = "Item";
+        public bool Need { get; set; } = false;
+        public bool Greed { get; set; } = false;
+        public bool Pass { get; set; } = false;
+        public bool DoNothing { get; set; } = true;
+    }
+    
+    public class RestrictionDuty
+    {
+        public string Id { get; set; } = Guid.NewGuid().ToString();
+        public bool Enabled { get; set; } = false;
+        public string Icon { get; set; } = "Icon";
+        public string Name { get; set; } = "Duty";
+        public bool Need { get; set; } = false;
+        public bool Greed { get; set; } = false;
+        public bool Pass { get; set; } = false;
+        public bool DoNothing { get; set; } = true;
+    }
+    
     public class Configuration : IPluginConfiguration
     {
         public bool FulfEnabled = false;
@@ -61,6 +94,8 @@ namespace LazyLoot
         public bool DiagnosticsMode = false;
         public bool NoPassEmergency = false;
 
+        public RestrictionGroup Restrictions { get; set; } = new();
+        
         public int Version { get; set; }
 
         public void Save() => Svc.PluginInterface.SavePluginConfig(this);

@@ -46,6 +46,7 @@ public class LazyLoot : IDalamudPlugin, IDisposable
         DtrEntry.OnClick = new(() => CycleFulf());
 
 
+        Svc.PluginInterface.UiBuilder.OpenMainUi += OnOpenConfigUi;
         Svc.PluginInterface.UiBuilder.OpenConfigUi += OnOpenConfigUi;
         Svc.Chat.CheckMessageHandled += NoticeLoot;
 
@@ -76,16 +77,14 @@ public class LazyLoot : IDalamudPlugin, IDisposable
         if (args.Length == 0)
         {
             OnOpenConfigUi();
-            return;
         }
         else
         {
-            RollingCommand(null, arguments);
-            return;
+            RollingCommand(null!, arguments);
         }
     }
 
-    private void CycleFulf()
+    private static void CycleFulf()
     {
         if (!Config.FulfEnabled)
         {
@@ -120,6 +119,7 @@ public class LazyLoot : IDalamudPlugin, IDisposable
         if (!disposing)
             return;
 
+        Svc.PluginInterface.UiBuilder.OpenMainUi -= OnOpenConfigUi;
         Svc.PluginInterface.UiBuilder.OpenConfigUi -= OnOpenConfigUi;
         Svc.Chat.CheckMessageHandled -= NoticeLoot;
 
@@ -184,7 +184,7 @@ public class LazyLoot : IDalamudPlugin, IDisposable
     {
         if (Config.FulfEnabled)
         {
-            string fulfMode = Config.FulfRoll switch
+            var fulfMode = Config.FulfRoll switch
             {
                 0 => "Needing",
                 1 => "Greeding",
@@ -227,7 +227,7 @@ public class LazyLoot : IDalamudPlugin, IDisposable
 
         try
         {
-            if (!Roller.RollOneItem(_rollOption, ref _need, ref _greed, ref _pass))//Finish the loot
+            if (!Roller.RollOneItem(_rollOption, ref _need, ref _greed, ref _pass)) //Finish the loot
             {
                 ShowResult(_need, _greed, _pass);
                 _need = _greed = _pass = 0;
