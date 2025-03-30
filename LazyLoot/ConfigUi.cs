@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Numerics;
@@ -398,11 +399,40 @@ public class ConfigUi : Window, IDisposable
             ImGui.EndTable();
         }
 
+        ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(2, 0));
+        if (ImGui.Button("Export", new Vector2(60, 0)))
+        {
+            var json = System.Text.Json.JsonSerializer.Serialize(LazyLoot.Config.Restrictions.Items);
+            ImGui.SetClipboardText(json);
+            Notify.Success("Item Restrictions settings copied to clipboard!");
+        }
+
+        ImGui.SameLine();
+        if (ImGui.Button("Import", new Vector2(60, 0)))
+        {
+            try
+            {
+                var items =
+                    System.Text.Json.JsonSerializer.Deserialize<List<CustomRestriction>>(ImGui.GetClipboardText());
+                if (items != null)
+                {
+                    LazyLoot.Config.Restrictions.Items = items;
+                    LazyLoot.Config.Save();
+                    Notify.Success("Imported Item Restrictions successfully!");;
+                }
+            }
+            catch
+            {
+                Notify.Error("Failed to import item restriction settings - invalid format");
+            }
+        }
+        ImGui.SameLine();
         if (ImGui.Button("Add Item", new Vector2(-1, 0)))
         {
             searchResultsQuery = "";
             ImGui.OpenPopup("item_search_add");
         }
+        ImGui.PopStyleVar();
 
         var itemSheet = Svc.Data.GetExcelSheet<Item>();
 
@@ -443,6 +473,7 @@ public class ConfigUi : Window, IDisposable
                             ImGui.Image(icon.ImGuiHandle, new Vector2(16, 16));
                             ImGui.SameLine();
                         }
+
                         if (!ImGui.Selectable($" {item.Name} (ID: {item.RowId})")) continue;
                         LazyLoot.Config.Restrictions.Items.Add(new CustomRestriction
                         {
@@ -464,7 +495,8 @@ public class ConfigUi : Window, IDisposable
     private static void DrawUserRestrictionDuties()
     {
         ImGuiEx.LineCentered("ItemRestrictionWarning",
-            () => {
+            () =>
+            {
                 var width = ImGui.GetWindowWidth() - 30;
                 ImGui.PushTextWrapPos(width);
                 ImGui.TextColored(ImGuiColors.DalamudYellow,
@@ -550,11 +582,40 @@ public class ConfigUi : Window, IDisposable
             ImGui.EndTable();
         }
 
+        ImGui.PushStyleVar(ImGuiStyleVar.ItemSpacing, new Vector2(2, 0));
+        if (ImGui.Button("Export", new Vector2(60, 0)))
+        {
+            var json = System.Text.Json.JsonSerializer.Serialize(LazyLoot.Config.Restrictions.Duties);
+            ImGui.SetClipboardText(json);
+            Notify.Success("Duty Restrictions copied to clipboard!");
+        }
+
+        ImGui.SameLine();
+        if (ImGui.Button("Import", new Vector2(60, 0)))
+        {
+            try
+            {
+                var duties =
+                    System.Text.Json.JsonSerializer.Deserialize<List<CustomRestriction>>(ImGui.GetClipboardText());
+                if (duties != null)
+                {
+                    LazyLoot.Config.Restrictions.Duties = duties;
+                    LazyLoot.Config.Save();
+                    Notify.Success("Imported Duty Restrictions successfully!");
+                }
+            }
+            catch
+            {
+                Notify.Error("Failed to import duty restriction settings - invalid format");
+            }
+        }
+        ImGui.SameLine();
         if (ImGui.Button("Add Duty", new Vector2(-1, 0)))
         {
             searchResultsQuery = "";
             ImGui.OpenPopup("duty_search_add");
         }
+        ImGui.PopStyleVar();
 
         var dutySheet = Svc.Data.GetExcelSheet<ContentFinderCondition>();
 
