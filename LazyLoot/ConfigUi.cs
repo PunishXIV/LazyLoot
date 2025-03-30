@@ -298,9 +298,17 @@ public class ConfigUi : Window, IDisposable
 
     private static nint GetDutyIcon(ContentFinderCondition duty)
     {
-        return GetItemIcon(duty is { HighEndDuty: true, ContentType.Value.RowId: 5 }
-            ? Svc.Data.GetExcelSheet<ContentType>().First(x => x.RowId == 28).Icon
-            : duty.ContentType.Value.Icon).ImGuiHandle;
+        var icon = duty is { HighEndDuty: true, ContentType.Value.RowId: 5 }
+            ? Svc.Data.GetExcelSheet<ContentType>()
+                .FirstOrDefault(x => x.RowId == 28).Icon
+            : duty.ContentType.Value.Icon;
+        if (icon == 0)
+        {
+            return 0;
+        }
+
+        var itemIcon = GetItemIcon(icon);
+        return itemIcon?.ImGuiHandle ?? 0;
     }
 
     private static void DrawUserRestrictionItems()
@@ -333,7 +341,12 @@ public class ConfigUi : Window, IDisposable
 
                 ImGui.TableNextColumn();
                 CenterText();
-                ImGui.Image(GetItemIcon(restrictedItem.Icon).ImGuiHandle, new Vector2(24, 24));
+
+                var icon = GetItemIcon(restrictedItem.Icon);
+                if (icon != null)
+                    ImGui.Image(icon.ImGuiHandle, new Vector2(24, 24));
+                else
+                    ImGui.Text("-");
 
                 ImGui.TableNextColumn();
                 ImGui.Text(restrictedItem.Name.ToString());
@@ -397,10 +410,17 @@ public class ConfigUi : Window, IDisposable
             {
                 lastSearchTime = currentTime;
                 itemSearchResults = !string.IsNullOrEmpty(searchResultsQuery)
-                    ? itemSheet.Where(x =>
-                            x.Name.ToString().Contains(searchResultsQuery, StringComparison.OrdinalIgnoreCase) &&
-                            LazyLoot.Config.Restrictions.Items.All(i => i.Id != x.RowId))
-                        .ToArray()
+                    ? uint.TryParse(searchResultsQuery, out var searchId)
+                        ? itemSheet.Where(x =>
+                                x.RowId == searchId &&
+                                LazyLoot.Config.Restrictions.Items.All(i => i.Id != x.RowId))
+                            .Take(20)
+                            .ToArray()
+                        : itemSheet.Where(x =>
+                                x.Name.ToString().Contains(searchResultsQuery, StringComparison.OrdinalIgnoreCase) &&
+                                LazyLoot.Config.Restrictions.Items.All(i => i.Id != x.RowId))
+                            .Take(20)
+                            .ToArray()
                     : [];
             }
 
@@ -412,20 +432,23 @@ public class ConfigUi : Window, IDisposable
                 if (ImGui.BeginChild("itemSearchResults", new Vector2(maxWidth, 200), true))
                 {
                     foreach (var item in itemSearchResults)
-                        if (ImGui.Selectable($"{item.Name} (ID: {item.RowId})"))
+                    {
+                        var icon = GetItemIcon(item.Icon);
+                        if (icon != null)
                         {
-                            var selectedItemId = item.RowId;
-                            var selectedItem = itemSheet.GetRow(selectedItemId);
-                            var newItem = new CustomRestriction
-                            {
-                                Id = selectedItem.RowId,
-                                Enabled = true,
-                                RollRule = RollResult.UnAwarded
-                            };
-                            LazyLoot.Config.Restrictions.Items.Add(newItem);
-                            LazyLoot.Config.Save();
-                            ImGui.CloseCurrentPopup();
+                            ImGui.Image(icon.ImGuiHandle, new Vector2(16, 16));
+                            ImGui.SameLine();
                         }
+                        if (!ImGui.Selectable($" {item.Name} (ID: {item.RowId})")) continue;
+                        LazyLoot.Config.Restrictions.Items.Add(new CustomRestriction
+                        {
+                            Id = itemSheet.GetRow(item.RowId).RowId,
+                            Enabled = true,
+                            RollRule = RollResult.UnAwarded
+                        });
+                        LazyLoot.Config.Save();
+                        ImGui.CloseCurrentPopup();
+                    }
 
                     ImGui.EndChild();
                 }
@@ -529,11 +552,17 @@ public class ConfigUi : Window, IDisposable
             {
                 lastSearchTime = currentTime;
                 dutySearchResults = !string.IsNullOrEmpty(searchResultsQuery)
-                    ? dutySheet.Where(x =>
-                            x.Name.ToString().Contains(searchResultsQuery,
-                                StringComparison.OrdinalIgnoreCase) &&
-                            LazyLoot.Config.Restrictions.Duties.All(i => i.Id != x.RowId))
-                        .ToArray()
+                    ? uint.TryParse(searchResultsQuery, out var searchId)
+                        ? dutySheet.Where(x =>
+                                x.RowId == searchId &&
+                                LazyLoot.Config.Restrictions.Items.All(i => i.Id != x.RowId))
+                            .Take(20)
+                            .ToArray()
+                        : dutySheet.Where(x =>
+                                x.Name.ToString().Contains(searchResultsQuery, StringComparison.OrdinalIgnoreCase) &&
+                                LazyLoot.Config.Restrictions.Items.All(i => i.Id != x.RowId))
+                            .Take(20)
+                            .ToArray()
                     : [];
             }
 
@@ -549,20 +578,15 @@ public class ConfigUi : Window, IDisposable
                     {
                         ImGui.Image(GetDutyIcon(duty), new Vector2(16, 16));
                         ImGui.SameLine();
-                        if (ImGui.Selectable($" {duty.Name} (ID: {duty.RowId})"))
+                        if (!ImGui.Selectable($" {duty.Name} (ID: {duty.RowId})")) continue;
+                        LazyLoot.Config.Restrictions.Duties.Add(new CustomRestriction
                         {
-                            var selectedDutyId = duty.RowId;
-                            var selectedDuty = dutySheet.GetRow(selectedDutyId);
-                            var newDuty = new CustomRestriction
-                            {
-                                Id = selectedDuty.RowId,
-                                Enabled = true,
-                                RollRule = RollResult.UnAwarded
-                            };
-                            LazyLoot.Config.Restrictions.Duties.Add(newDuty);
-                            LazyLoot.Config.Save();
-                            ImGui.CloseCurrentPopup();
-                        }
+                            Id = dutySheet.GetRow(duty.RowId).RowId,
+                            Enabled = true,
+                            RollRule = RollResult.UnAwarded
+                        });
+                        LazyLoot.Config.Save();
+                        ImGui.CloseCurrentPopup();
                     }
 
                     ImGui.EndChild();
