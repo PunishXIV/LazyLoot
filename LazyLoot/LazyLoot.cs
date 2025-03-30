@@ -64,7 +64,7 @@ public class LazyLoot : IDalamudPlugin, IDisposable
 
         Svc.Commands.AddHandler("/fulf", new CommandInfo(FulfCommand)
         {
-            HelpMessage = "Enable/Disable FULF with /fulf or change the loot rule with /fulf need | greed | pass.",
+            HelpMessage = "Enable/Disable FULF with /fulf [on|off] or change the loot rule with /fulf need | greed | pass.",
             ShowInHelp = true,
         });
 
@@ -142,6 +142,14 @@ public class LazyLoot : IDalamudPlugin, IDisposable
         if (res.HasValue)
         {
             Config.FulfRoll = res.Value;
+        }
+        else if (arguments.Contains("off", StringComparison.OrdinalIgnoreCase))
+        {
+            Config.FulfEnabled = false;
+        }
+        else if (arguments.Contains("on", StringComparison.OrdinalIgnoreCase))
+        {
+            Config.FulfEnabled = true;
         }
         else
         {
