@@ -296,6 +296,13 @@ public class ConfigUi : Window, IDisposable
         ImGui.SetCursorPosX(ImGui.GetCursorPosX() + (ImGui.GetColumnWidth() - ImGui.GetFrameHeight()) * 0.5f);
     }
 
+    private static nint GetDutyIcon(ContentFinderCondition duty)
+    {
+        return GetItemIcon(duty is { HighEndDuty: true, ContentType.Value.RowId: 5 }
+            ? Svc.Data.GetExcelSheet<ContentType>().First(x => x.RowId == 28).Icon
+            : duty.ContentType.Value.Icon).ImGuiHandle;
+    }
+
     private static void DrawUserRestrictionItems()
     {
         if (ImGui.BeginTable("UserRestrictionItemsTable", 8, ImGuiTableFlags.Borders))
@@ -409,7 +416,6 @@ public class ConfigUi : Window, IDisposable
                         {
                             var selectedItemId = item.RowId;
                             var selectedItem = itemSheet.GetRow(selectedItemId);
-                            var selectedItemName = selectedItem.Name.ToString();
                             var newItem = new CustomRestriction
                             {
                                 Id = selectedItem.RowId,
@@ -458,7 +464,7 @@ public class ConfigUi : Window, IDisposable
 
                 ImGui.TableNextColumn();
                 CenterText();
-                ImGui.Image(GetItemIcon(restrictedDuty.ContentType.Value.Icon).ImGuiHandle, new Vector2(24, 24));
+                ImGui.Image(GetDutyIcon(restrictedDuty), new Vector2(24, 24));
 
                 ImGui.TableNextColumn();
                 ImGui.Text(restrictedDuty.Name.ToString());
@@ -540,11 +546,13 @@ public class ConfigUi : Window, IDisposable
                 if (ImGui.BeginChild("dutySearchResults", new Vector2(maxWidth, 200), true))
                 {
                     foreach (var duty in dutySearchResults)
-                        if (ImGui.Selectable($"{duty.Name} (ID: {duty.RowId})"))
+                    {
+                        ImGui.Image(GetDutyIcon(duty), new Vector2(16, 16));
+                        ImGui.SameLine();
+                        if (ImGui.Selectable($" {duty.Name} (ID: {duty.RowId})"))
                         {
                             var selectedDutyId = duty.RowId;
                             var selectedDuty = dutySheet.GetRow(selectedDutyId);
-                            var selectedDutyName = selectedDuty.Name.ToString();
                             var newDuty = new CustomRestriction
                             {
                                 Id = selectedDuty.RowId,
@@ -555,6 +563,7 @@ public class ConfigUi : Window, IDisposable
                             LazyLoot.Config.Save();
                             ImGui.CloseCurrentPopup();
                         }
+                    }
 
                     ImGui.EndChild();
                 }
