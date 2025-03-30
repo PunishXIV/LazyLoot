@@ -20,40 +20,22 @@ internal static class Roller
     static RollItemRaw _rollItemRaw;
 
     static uint _itemId = 0, _index = 0;
-    static HashSet<uint> _ignoredIndexes = new();
-    
 
     public static void Clear()
     {
         _itemId = _index = 0;
-        _ignoredIndexes.Clear();
     }
-    
-    public static bool IsIndexIgnored(uint index) => _ignoredIndexes.Contains(index);
-    
-    public static void AddIgnoredIndex(uint index) => _ignoredIndexes.Add(index);
 
     public static bool RollOneItem(RollResult option, ref int need, ref int greed, ref int pass)
     {
         if (!GetNextLootItem(out var index, out var loot)) return false;
 
-        var playerRestriction = GetPlayerRestrict(loot);
-        
         //Make option valid.
-        option = ResultMerge(option, GetRestrictResult(loot), playerRestriction);
-        
-        // Do nothing if set to do nothing (if the player requested too)
-        if (playerRestriction == RollResult.UnAwarded)
-        {
-            if (LazyLoot.Config.DiagnosticsMode)
-                Svc.Log.Debug($"Is UnAwarded: {loot.ItemId} {option}");
-            _itemId = loot.ItemId;
-            _index = index;
-            AddIgnoredIndex(index);
-            return true;
-        }
-        
-        Svc.Log.Debug($"{loot.ItemId} {option}");
+        option = ResultMerge(option, GetRestrictResult(loot), GetPlayerRestrict(loot));
+
+        if (LazyLoot.Config.DiagnosticsMode)
+            Svc.Log.Debug($"{loot.ItemId} {option}");
+
         if (_itemId == loot.ItemId && index == _index)
         {
             if (LazyLoot.Config.DiagnosticsMode && !LazyLoot.Config.NoPassEmergency)
@@ -160,15 +142,15 @@ internal static class Roller
         {
             if (LazyLoot.Config.DiagnosticsMode)
             {
-                var action = itemCustomRestriction.RollRule == RollResult.UnAwarded ? "being ignored" :
-                    itemCustomRestriction.RollRule == RollResult.Passed ? "passing" :
+                var action = itemCustomRestriction.RollRule == RollResult.Passed ? "passing" :
                     itemCustomRestriction.RollRule == RollResult.Greeded ? "greeding" :
                     itemCustomRestriction.RollRule == RollResult.Needed ? "needing" : "passing";
                 Svc.Log.Debug($"{lootItem.Value.Name.ToString()} is {action}. [Item Custom Restriction]");
             }
+
             return itemCustomRestriction.RollRule;
         }
-        
+
         // Here, we will check for the specific rules for the Duty.
         var contentFinderInfo = Svc.Data.GetExcelSheet<ContentFinderCondition>()
             .GetRow(GameMain.Instance()->CurrentContentFinderConditionId);
@@ -178,13 +160,13 @@ internal static class Roller
         {
             if (LazyLoot.Config.DiagnosticsMode)
             {
-                var action = dutyCustomRestriction.RollRule == RollResult.UnAwarded ? "being ignored" :
-                    dutyCustomRestriction.RollRule == RollResult.Passed ? "passing" :
+                var action = dutyCustomRestriction.RollRule == RollResult.Passed ? "passing" :
                     dutyCustomRestriction.RollRule == RollResult.Greeded ? "greeding" :
                     dutyCustomRestriction.RollRule == RollResult.Needed ? "needing" : "passing";
                 Svc.Log.Debug(
                     $"{lootItem.Value.Name.ToString()} is {action} due to being in {contentFinderInfo.Name}. [Duty Custom Restriction]");
             }
+
             return dutyCustomRestriction.RollRule;
         }
 
@@ -419,7 +401,6 @@ internal static class Roller
         var span = Loot.Instance()->Items;
         for (i = 0; i < span.Length; i++)
         {
-            if(IsIndexIgnored(i)) continue;
             loot = span[(int)i];
             if (loot.ItemId >= 1000000) loot.ItemId -= 1000000;
             if (loot.ChestObjectId is 0 or 0xE0000000) continue;
@@ -427,29 +408,67 @@ internal static class Roller
             if (loot.RollState is RollState.Rolled or RollState.Unavailable or RollState.Unknown) continue;
             if (loot.ItemId == 0) continue;
             if (loot.LootMode is LootMode.LootMasterGreedOnly or LootMode.Unavailable) continue;
-            if (LazyLoot.Config.RestrictionWeeklyLockoutItems)
-            {
-                var contentFinderInfo = Svc.Data.GetExcelSheet<ContentFinderCondition>()
-                    .GetRow(GameMain.Instance()->CurrentContentFinderConditionId);
-                var instanceInfo = Svc.Data.GetExcelSheet<Lumina.Excel.Sheets.InstanceContent>()
-                    .GetRow(contentFinderInfo.Content.RowId);
-                if (contentFinderInfo.RowId is >= 1019 and <= 1026) continue;
 
-                if (instanceInfo.WeekRestriction == 1)
+            var checkWeekly = true;
+            var lootId = loot.ItemId;
+            var contentFinderInfo = Svc.Data.GetExcelSheet<ContentFinderCondition>()
+                .GetRow(GameMain.Instance()->CurrentContentFinderConditionId);
+
+            // User wants this item to do NOTHING
+            var itemCustomRestriction =
+                LazyLoot.Config.Restrictions.Items.FirstOrDefault(x =>
+                    x.Id == lootId && x is { Enabled: true });
+
+            // User wants this DUTY items to do NOTHING
+            var dutyCustomRestriction =
+                LazyLoot.Config.Restrictions.Duties.FirstOrDefault(x =>
+                    x.Id == contentFinderInfo.RowId && x is { Enabled: true, RollRule: RollResult.UnAwarded });
+
+            var item = Svc.Data.GetExcelSheet<Item>().GetRow(loot.ItemId);
+
+            if (itemCustomRestriction != null)
+            {
+                if (itemCustomRestriction.RollRule == RollResult.UnAwarded)
                 {
-                    var item = Svc.Data.GetExcelSheet<Item>().GetRow(loot.ItemId);
-                    if (item.ItemAction.Value.Type != 853 &&
-                        item.ItemAction.Value.Type != 1013 &&
-                        item.ItemAction.Value.Type != 2633 &&
-                        item.ItemAction.Value.Type != 3357 &&
-                        item.ItemAction.Value.Type != 25183 &&
-                        item.Icon != 25958)
-                    {
-                        continue;
-                    }
+                    if (LazyLoot.Config.DiagnosticsMode)
+                        Svc.Log.Debug(
+                            $"{item.Name.ToString()} is being ignored. [Item Custom Restriction]");
+                    continue;
                 }
+                checkWeekly = false; // This means there is something set and we cant skip
             }
 
+            if (itemCustomRestriction == null && dutyCustomRestriction != null)
+            {
+                if (dutyCustomRestriction.RollRule == RollResult.UnAwarded)
+                {
+                    if (LazyLoot.Config.DiagnosticsMode)
+                        Svc.Log.Debug(
+                            $"{item.Name.ToString()} is being ignored due to being in {contentFinderInfo.Name}. [Duty Custom Restriction]");
+                    continue;
+                }
+                checkWeekly = false; // This means there is something set and we cant skip
+            }
+
+            // TODO: Reword this down below when Dalamud is updated with https://github.com/aers/FFXIVClientStructs/pull/1366 
+            
+            if (!LazyLoot.Config.RestrictionWeeklyLockoutItems || !checkWeekly) return true;
+            
+            var instanceInfo = Svc.Data.GetExcelSheet<Lumina.Excel.Sheets.InstanceContent>()
+                .GetRow(contentFinderInfo.Content.RowId);
+            if (contentFinderInfo.RowId is >= 1019 and <= 1026) continue;
+
+            if (instanceInfo.WeekRestriction != 1) return true;
+
+            if (item.ItemAction.Value.Type != 853 &&
+                item.ItemAction.Value.Type != 1013 &&
+                item.ItemAction.Value.Type != 2633 &&
+                item.ItemAction.Value.Type != 3357 &&
+                item.ItemAction.Value.Type != 25183 &&
+                item.Icon != 25958)
+            {
+                continue;
+            }
 
             return true;
         }
