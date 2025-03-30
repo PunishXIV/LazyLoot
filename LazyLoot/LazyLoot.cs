@@ -196,7 +196,8 @@ public class LazyLoot : IDalamudPlugin, IDisposable
             {
                 0 => "Needing",
                 1 => "Greeding",
-                2 => "Passing"
+                2 => "Passing",
+                _ => throw new ArgumentOutOfRangeException(nameof(Config.FulfRoll)),
             };
 
             DtrEntry.Text = new SeString(

@@ -21,6 +21,7 @@ namespace LazyLoot;
 
 public class ConfigUi : Window, IDisposable
 {
+    private static string clipboardText;
     private static int debugValue;
     private static string searchResultsQuery;
     private static double lastSearchTime;
@@ -412,31 +413,59 @@ public class ConfigUi : Window, IDisposable
         {
             try
             {
-                var items =
-                    System.Text.Json.JsonSerializer.Deserialize<List<CustomRestriction>>(ImGui.GetClipboardText());
-                if (items != null)
+                clipboardText = ImGui.GetClipboardText();
+                if (string.IsNullOrEmpty(clipboardText))
                 {
-                    LazyLoot.Config.Restrictions.Items = items;
-                    LazyLoot.Config.Save();
-                    Notify.Success("Imported Item Restrictions successfully!");;
+                    Notify.Error("Nothing to import on your clipboard");
+                    return;
                 }
+                ImGui.OpenPopup("import_item_confirmation");
             }
             catch
             {
                 Notify.Error("Failed to import item restriction settings - invalid format");
             }
         }
+
         ImGui.SameLine();
         if (ImGui.Button("Add Item", new Vector2(-1, 0)))
         {
             searchResultsQuery = "";
             ImGui.OpenPopup("item_search_add");
         }
+
         ImGui.PopStyleVar();
 
         var itemSheet = Svc.Data.GetExcelSheet<Item>();
 
-        if (!ImGui.BeginPopup("item_search_add")) return;
+        if (ImGui.BeginPopup("import_item_confirmation", ImGuiWindowFlags.AlwaysAutoResize))
+        {
+            ImGui.Text("Are you sure you want to replace your current item restrictions configuration?");
+            ImGuiEx.LineCentered(() => ImGuiEx.TextUnderlined("This action cannot be undone."));
+            ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(40 / 255f, 167 / 255f, 69 / 255f, 1.0f));
+            if (ImGui.Button("YES", new Vector2(100f, 0)))
+            {
+                var items = System.Text.Json.JsonSerializer.Deserialize<List<CustomRestriction>>(clipboardText);
+                if (items != null)
+                {
+                    LazyLoot.Config.Restrictions.Items = items;
+                    LazyLoot.Config.Save();
+                    Notify.Success("Imported Item Restrictions successfully!");
+                }
+
+                ImGui.CloseCurrentPopup();
+            }
+            ImGui.PopStyleColor();
+            ImGui.SameLine();
+            ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(220 / 255f, 53 / 255f, 69 / 255f, 1.0f));
+            if (ImGui.Button("NO", new Vector2(-1, 0)))
+            {
+                ImGui.CloseCurrentPopup();
+            }
+            ImGui.PopStyleColor();
+            ImGui.EndPopup();
+        }
+        if (ImGui.BeginPopup("item_search_add"))
         {
             ImGui.Text("Search for item:");
             var currentTime = ImGui.GetTime();
@@ -595,31 +624,60 @@ public class ConfigUi : Window, IDisposable
         {
             try
             {
-                var duties =
-                    System.Text.Json.JsonSerializer.Deserialize<List<CustomRestriction>>(ImGui.GetClipboardText());
-                if (duties != null)
+                clipboardText = ImGui.GetClipboardText();
+                if (string.IsNullOrEmpty(clipboardText))
                 {
-                    LazyLoot.Config.Restrictions.Duties = duties;
-                    LazyLoot.Config.Save();
-                    Notify.Success("Imported Duty Restrictions successfully!");
+                    Notify.Error("Nothing to import on your clipboard");
+                    return;
                 }
+
+                ImGui.OpenPopup("import_duty_confirmation");
             }
             catch
             {
                 Notify.Error("Failed to import duty restriction settings - invalid format");
             }
         }
+
         ImGui.SameLine();
         if (ImGui.Button("Add Duty", new Vector2(-1, 0)))
         {
             searchResultsQuery = "";
             ImGui.OpenPopup("duty_search_add");
         }
+
         ImGui.PopStyleVar();
 
         var dutySheet = Svc.Data.GetExcelSheet<ContentFinderCondition>();
+        
+        if (ImGui.BeginPopup("import_duty_confirmation", ImGuiWindowFlags.AlwaysAutoResize))
+        {
+            ImGui.Text("Are you sure you want to replace your current duty restrictions configuration?");
+            ImGuiEx.LineCentered(() => ImGuiEx.TextUnderlined("This action cannot be undone."));
+            ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(40 / 255f, 167 / 255f, 69 / 255f, 1.0f));
+            if (ImGui.Button("YES", new Vector2(100f, 0)))
+            {
+                var duties = System.Text.Json.JsonSerializer.Deserialize<List<CustomRestriction>>(clipboardText);
+                if (duties != null)
+                {
+                    LazyLoot.Config.Restrictions.Duties = duties;
+                    LazyLoot.Config.Save();
+                    Notify.Success("Imported Duty Restrictions successfully!");
+                }
 
-        if (!ImGui.BeginPopup("duty_search_add")) return;
+                ImGui.CloseCurrentPopup();
+            }
+            ImGui.PopStyleColor();
+            ImGui.SameLine();
+            ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(220 / 255f, 53 / 255f, 69 / 255f, 1.0f));
+            if (ImGui.Button("NO", new Vector2(-1, 0)))
+            {
+                ImGui.CloseCurrentPopup();
+            }
+            ImGui.PopStyleColor();
+            ImGui.EndPopup();
+        }
+        if (ImGui.BeginPopup("duty_search_add"))
         {
             ImGui.Text("Search for duty:");
             var currentTime = ImGui.GetTime();
@@ -634,7 +692,8 @@ public class ConfigUi : Window, IDisposable
                             .Take(20)
                             .ToArray()
                         : dutySheet.Where(x =>
-                                x.Name.ToString().Contains(searchResultsQuery, StringComparison.OrdinalIgnoreCase) &&
+                                x.Name.ToString().Contains(searchResultsQuery,
+                                    StringComparison.OrdinalIgnoreCase) &&
                                 LazyLoot.Config.Restrictions.Items.All(i => i.Id != x.RowId))
                             .Take(20)
                             .ToArray()
