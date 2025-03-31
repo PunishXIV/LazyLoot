@@ -454,7 +454,10 @@ internal static class Roller
                 checkWeekly = false;
             }
             
-            if (loot.WeeklyLootItem && checkWeekly) continue;
+            // loot.RollValue == 20 means it cant be rolled because one was already obtained this week.
+            // we ignore that so it will be passed automatically, as there is nothing the user can do other than
+            // pass it
+            if (loot.WeeklyLootItem && (byte)loot.RollState != 20 && checkWeekly) continue;
 
             return true;
         }
