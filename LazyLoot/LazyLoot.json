@@ -14,5 +14,5 @@
   "ImageUrls": null,
   "IconUrl": "https://love.puni.sh/resources/lazyloot.png",
   "DalamudAPILevel": 12,
-  "ChangeLog": "- Add Item and Duty specific restrictions"
+  "ChangeLog": "- Add Item and Duty specific restrictions; - Update for 7.2 HF 1; - Add an improved Weekly loot restriction (Now it will only roll on items that doesn't have the weekly loot flag!)"
 }
