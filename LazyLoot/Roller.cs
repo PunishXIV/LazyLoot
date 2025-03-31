@@ -402,40 +402,44 @@ internal static class Roller
         for (i = 0; i < span.Length; i++)
         {
             loot = span[(int)i];
+            
             if (loot.ItemId >= 1000000) loot.ItemId -= 1000000;
             if (loot.ChestObjectId is 0 or 0xE0000000) continue;
-            if ((RollResult)loot.RollResult != RollResult.UnAwarded) continue;
+            if (loot.RollResult != RollResult.UnAwarded) continue;
             if (loot.RollState is RollState.Rolled or RollState.Unavailable or RollState.Unknown) continue;
             if (loot.ItemId == 0) continue;
             if (loot.LootMode is LootMode.LootMasterGreedOnly or LootMode.Unavailable) continue;
 
-            var checkWeekly = true;
+            var checkWeekly = LazyLoot.Config.RestrictionWeeklyLockoutItems;
+            
             var lootId = loot.ItemId;
             var contentFinderInfo = Svc.Data.GetExcelSheet<ContentFinderCondition>()
                 .GetRow(GameMain.Instance()->CurrentContentFinderConditionId);
-
-            // User wants this item to do NOTHING
+            
+            // We load the users restrictions
             var itemCustomRestriction =
                 LazyLoot.Config.Restrictions.Items.FirstOrDefault(x =>
                     x.Id == lootId && x is { Enabled: true });
-
-            // User wants this DUTY items to do NOTHING
             var dutyCustomRestriction =
                 LazyLoot.Config.Restrictions.Duties.FirstOrDefault(x =>
                     x.Id == contentFinderInfo.RowId && x is { Enabled: true, RollRule: RollResult.UnAwarded });
+            
+            Item? item = null;
 
-            var item = Svc.Data.GetExcelSheet<Item>().GetRow(loot.ItemId);
+            if (LazyLoot.Config.DiagnosticsMode)
+                // Only load the item if diagnostic mode is on
+                item = Svc.Data.GetExcelSheet<Item>().GetRow(loot.ItemId);
 
             if (itemCustomRestriction != null)
             {
                 if (itemCustomRestriction.RollRule == RollResult.UnAwarded)
                 {
                     if (LazyLoot.Config.DiagnosticsMode)
-                        Svc.Log.Debug(
-                            $"{item.Name.ToString()} is being ignored. [Item Custom Restriction]");
+                        DuoLog.Debug(
+                            $"{item?.Name.ToString()} is being ignored. [Item Custom Restriction]");
                     continue;
                 }
-                checkWeekly = false; // This means there is something set and we cant skip
+                checkWeekly = false;
             }
 
             if (itemCustomRestriction == null && dutyCustomRestriction != null)
@@ -443,32 +447,14 @@ internal static class Roller
                 if (dutyCustomRestriction.RollRule == RollResult.UnAwarded)
                 {
                     if (LazyLoot.Config.DiagnosticsMode)
-                        Svc.Log.Debug(
-                            $"{item.Name.ToString()} is being ignored due to being in {contentFinderInfo.Name}. [Duty Custom Restriction]");
+                        DuoLog.Debug(
+                            $"{item?.Name.ToString()} is being ignored due to being in {contentFinderInfo.Name}. [Duty Custom Restriction]");
                     continue;
                 }
-                checkWeekly = false; // This means there is something set and we cant skip
+                checkWeekly = false;
             }
-
-            // TODO: Reword this down below when Dalamud is updated with https://github.com/aers/FFXIVClientStructs/pull/1366 
             
-            if (!LazyLoot.Config.RestrictionWeeklyLockoutItems || !checkWeekly) return true;
-            
-            var instanceInfo = Svc.Data.GetExcelSheet<Lumina.Excel.Sheets.InstanceContent>()
-                .GetRow(contentFinderInfo.Content.RowId);
-            if (contentFinderInfo.RowId is >= 1019 and <= 1026) continue;
-
-            if (instanceInfo.WeekRestriction != 1) return true;
-
-            if (item.ItemAction.Value.Type != 853 &&
-                item.ItemAction.Value.Type != 1013 &&
-                item.ItemAction.Value.Type != 2633 &&
-                item.ItemAction.Value.Type != 3357 &&
-                item.ItemAction.Value.Type != 25183 &&
-                item.Icon != 25958)
-            {
-                continue;
-            }
+            if (loot.WeeklyLootItem && checkWeekly) continue;
 
             return true;
         }

@@ -97,11 +97,13 @@ public class ConfigUi : Window, IDisposable
                 ImGui.EndTabItem();
             }
 
+            #if DEBUG
             if (ImGui.BeginTabItem("Debug"))
             {
                 DrawDebug();
                 ImGui.EndTabItem();
             }
+            #endif
 
             ImGui.EndTabBar();
         }
@@ -356,6 +358,9 @@ public class ConfigUi : Window, IDisposable
 
                 ImGui.TableNextColumn();
                 ImGui.Text(restrictedItem.Name.ToString());
+                if (ImGui.IsItemHovered())
+                    ImGui.SetTooltip(restrictedItem.Name.ToString());
+                
                 ImGui.TableNextColumn();
                 CenterText();
                 if (ImGui.RadioButton($"##need{item.Id}", item.RollRule == RollResult.Needed))
@@ -419,6 +424,7 @@ public class ConfigUi : Window, IDisposable
                     Notify.Error("Nothing to import on your clipboard");
                     return;
                 }
+
                 ImGui.OpenPopup("import_item_confirmation");
             }
             catch
@@ -455,6 +461,7 @@ public class ConfigUi : Window, IDisposable
 
                 ImGui.CloseCurrentPopup();
             }
+
             ImGui.PopStyleColor();
             ImGui.SameLine();
             ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(220 / 255f, 53 / 255f, 69 / 255f, 1.0f));
@@ -462,9 +469,11 @@ public class ConfigUi : Window, IDisposable
             {
                 ImGui.CloseCurrentPopup();
             }
+
             ImGui.PopStyleColor();
             ImGui.EndPopup();
         }
+
         if (ImGui.BeginPopup("item_search_add"))
         {
             ImGui.Text("Search for item:");
@@ -562,10 +571,18 @@ public class ConfigUi : Window, IDisposable
 
                 ImGui.TableNextColumn();
                 CenterText();
+
                 ImGui.Image(GetDutyIcon(restrictedDuty), new Vector2(24, 24));
+                if (ImGui.IsItemHovered())
+                    ImGui.SetTooltip((restrictedDuty is { HighEndDuty: true, ContentType.Value.RowId: 5 }
+                        ? Svc.Data.GetExcelSheet<ContentType>()
+                            .FirstOrDefault(x => x.RowId == 28).Name
+                        : restrictedDuty.ContentType.Value.Name).ToString());
 
                 ImGui.TableNextColumn();
                 ImGui.Text(restrictedDuty.Name.ToString());
+                if (ImGui.IsItemHovered())
+                    ImGui.SetTooltip(restrictedDuty.Name.ToString());
 
                 ImGui.TableNextColumn();
                 CenterText();
@@ -649,7 +666,7 @@ public class ConfigUi : Window, IDisposable
         ImGui.PopStyleVar();
 
         var dutySheet = Svc.Data.GetExcelSheet<ContentFinderCondition>();
-        
+
         if (ImGui.BeginPopup("import_duty_confirmation", ImGuiWindowFlags.AlwaysAutoResize))
         {
             ImGui.Text("Are you sure you want to replace your current duty restrictions configuration?");
@@ -667,6 +684,7 @@ public class ConfigUi : Window, IDisposable
 
                 ImGui.CloseCurrentPopup();
             }
+
             ImGui.PopStyleColor();
             ImGui.SameLine();
             ImGui.PushStyleColor(ImGuiCol.Button, new Vector4(220 / 255f, 53 / 255f, 69 / 255f, 1.0f));
@@ -674,9 +692,11 @@ public class ConfigUi : Window, IDisposable
             {
                 ImGui.CloseCurrentPopup();
             }
+
             ImGui.PopStyleColor();
             ImGui.EndPopup();
         }
+
         if (ImGui.BeginPopup("duty_search_add"))
         {
             ImGui.Text("Search for duty:");
@@ -711,6 +731,8 @@ public class ConfigUi : Window, IDisposable
                     foreach (var duty in dutySearchResults)
                     {
                         ImGui.Image(GetDutyIcon(duty), new Vector2(16, 16));
+                        if (ImGui.IsItemHovered())
+                            ImGui.SetTooltip("Test");
                         ImGui.SameLine();
                         if (!ImGui.Selectable($" {duty.Name} (ID: {duty.RowId})")) continue;
                         LazyLoot.Config.Restrictions.Duties.Add(new CustomRestriction
