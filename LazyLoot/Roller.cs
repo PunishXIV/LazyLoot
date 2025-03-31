@@ -336,27 +336,28 @@ internal static class Roller
             if (loot.RollState is RollState.Rolled or RollState.Unavailable or RollState.Unknown) continue;
             if (loot.ItemId == 0) continue;
             if (loot.LootMode is LootMode.LootMasterGreedOnly or LootMode.Unavailable) continue;
-            if (LazyLoot.Config.RestrictionWeeklyLockoutItems)
-            {
-                var contentFinderInfo = Svc.Data.GetExcelSheet<ContentFinderCondition>().GetRow(GameMain.Instance()->CurrentContentFinderConditionId);
-                var instanceInfo = Svc.Data.GetExcelSheet<Lumina.Excel.Sheets.InstanceContent>().GetRow(contentFinderInfo.Content.RowId);
-                if (contentFinderInfo.RowId is >= 1019 and <= 1026) continue; //We really need a better solution
+            if (loot.WeeklyLootItem && LazyLoot.Config.RestrictionWeeklyLockoutItems) continue;
 
-                if (instanceInfo.WeekRestriction == 1)
-                {
-                    var item = Svc.Data.GetExcelSheet<Item>().GetRow(loot.ItemId);
+            //{
+            //    var contentFinderInfo = Svc.Data.GetExcelSheet<ContentFinderCondition>().GetRow(GameMain.Instance()->CurrentContentFinderConditionId);
+            //    var instanceInfo = Svc.Data.GetExcelSheet<Lumina.Excel.Sheets.InstanceContent>().GetRow(contentFinderInfo.Content.RowId);
+            //    if (contentFinderInfo.RowId is >= 1019 and <= 1026) continue; //We really need a better solution
 
-                    if (item.ItemAction.Value.Type != 853 &&
-                        item.ItemAction.Value.Type != 1013 &&
-                        item.ItemAction.Value.Type != 2633 &&
-                        item.ItemAction.Value.Type != 3357 &&
-                        item.ItemAction.Value.Type != 25183 &&
-                        item.Icon != 25958)
-                    {
-                        continue;
-                    }
-                }
-            }
+            //    if (instanceInfo.WeekRestriction == 1)
+            //    {
+            //        var item = Svc.Data.GetExcelSheet<Item>().GetRow(loot.ItemId);
+
+            //        if (item.ItemAction.Value.Type != 853 &&
+            //            item.ItemAction.Value.Type != 1013 &&
+            //            item.ItemAction.Value.Type != 2633 &&
+            //            item.ItemAction.Value.Type != 3357 &&
+            //            item.ItemAction.Value.Type != 25183 &&
+            //            item.Icon != 25958)
+            //        {
+            //            continue;
+            //        }
+            //    }
+            //}
 
 
             return true;

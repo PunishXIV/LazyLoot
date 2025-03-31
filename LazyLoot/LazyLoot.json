@@ -14,5 +14,5 @@
   "ImageUrls": null,
   "IconUrl": "https://love.puni.sh/resources/lazyloot.png",
   "DalamudAPILevel": 12,
-  "ChangeLog": "- Switch priority on ilvl related rolling rules."
+  "ChangeLog": "- Patch update."
 }
