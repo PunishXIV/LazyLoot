@@ -30,11 +30,12 @@ internal static class Roller
     {
         if (!GetNextLootItem(out var index, out var loot)) return false;
 
-        //Make option valid.
-        var userRules = GetPlayerRestrict(loot);
-        option = userRules != RollResult.UnAwarded
-            ? ResultMerge(GetRestrictResult(loot), userRules)
-            : ResultMerge(option, GetRestrictResult(loot), userRules);
+        // Make sure we ignore the fulf state if the user has custom item rules
+        // Otherwise, we make sure the option is a valid roll
+        var userRules = GetPlayerCustomRestrict(loot);
+        option = userRules != null
+            ? ResultMerge(GetRestrictResult(loot), (RollResult)userRules)
+            : ResultMerge(option, GetRestrictResult(loot), GetPlayerRestrict(loot));
 
         if (_itemId == loot.ItemId && index == _index)
         {
@@ -112,28 +113,10 @@ internal static class Roller
         return ResultMerge(stateMax, ruleMax);
     }
 
-    private static unsafe RollResult GetPlayerRestrict(LootItem loot)
+    private static unsafe RollResult? GetPlayerCustomRestrict(LootItem loot)
     {
         var lootItem = Svc.Data.GetExcelSheet<Item>().GetRowOrDefault(loot.ItemId);
-
-        UpdateFadedCopy(loot.ItemId, out var orchId);
-
-        if (lootItem == null)
-        {
-            if (LazyLoot.Config.DiagnosticsMode)
-                DuoLog.Debug(
-                    $"Passing due to unknown item? Please give this ID to the developers: {loot.ItemId} [Unknown ID]");
-            return RollResult.Passed;
-        }
-
-        if (lootItem.Value.IsUnique && ItemCount(loot.ItemId) > 0)
-        {
-            if (LazyLoot.Config.DiagnosticsMode)
-                DuoLog.Debug(
-                    $"{lootItem.Value.Name.ToString()} has been passed due to being unique and you already possess one. [Unique Item]");
-
-            return RollResult.Passed;
-        }
+        if (lootItem == null || (lootItem.Value.IsUnique && ItemCount(loot.ItemId) > 0)) return RollResult.Passed;
 
         // Here, we will check for the specific rules for items.
         var itemCustomRestriction =
@@ -168,6 +151,32 @@ internal static class Roller
             }
 
             return dutyCustomRestriction.RollRule;
+        }
+
+        return null;
+    }
+
+    private static unsafe RollResult GetPlayerRestrict(LootItem loot)
+    {
+        var lootItem = Svc.Data.GetExcelSheet<Item>().GetRowOrDefault(loot.ItemId);
+
+        UpdateFadedCopy(loot.ItemId, out var orchId);
+
+        if (lootItem == null)
+        {
+            if (LazyLoot.Config.DiagnosticsMode)
+                DuoLog.Debug(
+                    $"Passing due to unknown item? Please give this ID to the developers: {loot.ItemId} [Unknown ID]");
+            return RollResult.Passed;
+        }
+
+        if (lootItem.Value.IsUnique && ItemCount(loot.ItemId) > 0)
+        {
+            if (LazyLoot.Config.DiagnosticsMode)
+                DuoLog.Debug(
+                    $"{lootItem.Value.Name.ToString()} has been passed due to being unique and you already possess one. [Unique Item]");
+
+            return RollResult.Passed;
         }
 
         if (orchId.Count > 0 && orchId.All(x => IsItemUnlocked(x)))
@@ -402,7 +411,7 @@ internal static class Roller
         for (i = 0; i < span.Length; i++)
         {
             loot = span[(int)i];
-            
+
             if (loot.ItemId >= 1000000) loot.ItemId -= 1000000;
             if (loot.ChestObjectId is 0 or 0xE0000000) continue;
             if (loot.RollResult != RollResult.UnAwarded) continue;
@@ -411,11 +420,11 @@ internal static class Roller
             if (loot.LootMode is LootMode.LootMasterGreedOnly or LootMode.Unavailable) continue;
 
             var checkWeekly = LazyLoot.Config.RestrictionWeeklyLockoutItems;
-            
+
             var lootId = loot.ItemId;
             var contentFinderInfo = Svc.Data.GetExcelSheet<ContentFinderCondition>()
                 .GetRow(GameMain.Instance()->CurrentContentFinderConditionId);
-            
+
             // We load the users restrictions
             var itemCustomRestriction =
                 LazyLoot.Config.Restrictions.Items.FirstOrDefault(x =>
@@ -423,7 +432,7 @@ internal static class Roller
             var dutyCustomRestriction =
                 LazyLoot.Config.Restrictions.Duties.FirstOrDefault(x =>
                     x.Id == contentFinderInfo.RowId && x is { Enabled: true, RollRule: RollResult.UnAwarded });
-            
+
             Item? item = null;
 
             if (LazyLoot.Config.DiagnosticsMode)
@@ -455,7 +464,7 @@ internal static class Roller
 
                 checkWeekly = false;
             }
-            
+
             // loot.RollValue == 20 means it cant be rolled because one was already obtained this week.
             // we ignore that so it will be passed automatically, as there is nothing the user can do other than
             // pass it
