@@ -31,10 +31,10 @@ internal static class Roller
         if (!GetNextLootItem(out var index, out var loot)) return false;
 
         //Make option valid.
-        option = ResultMerge(option, GetRestrictResult(loot), GetPlayerRestrict(loot));
-
-        if (LazyLoot.Config.DiagnosticsMode)
-            Svc.Log.Debug($"{loot.ItemId} {option}");
+        var userRules = GetPlayerRestrict(loot);
+        option = userRules != RollResult.UnAwarded
+            ? ResultMerge(GetRestrictResult(loot), userRules)
+            : ResultMerge(option, GetRestrictResult(loot), userRules);
 
         if (_itemId == loot.ItemId && index == _index)
         {
@@ -361,7 +361,7 @@ internal static class Roller
             return RollResult.Passed;
         }
 
-        return RollResult.Needed;
+        return RollResult.UnAwarded;
     }
 
     public static void UpdateFadedCopy(uint itemId, out List<uint> orchId)
@@ -439,6 +439,7 @@ internal static class Roller
                             $"{item?.Name.ToString()} is being ignored. [Item Custom Restriction]");
                     continue;
                 }
+
                 checkWeekly = false;
             }
 
@@ -451,6 +452,7 @@ internal static class Roller
                             $"{item?.Name.ToString()} is being ignored due to being in {contentFinderInfo.Name}. [Duty Custom Restriction]");
                     continue;
                 }
+
                 checkWeekly = false;
             }
             
