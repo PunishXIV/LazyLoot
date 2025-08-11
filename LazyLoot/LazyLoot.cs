@@ -43,7 +43,7 @@ public class LazyLoot : IDalamudPlugin, IDisposable
         Config = Svc.PluginInterface.GetPluginConfig() as Configuration ?? new Configuration();
         ConfigUi = new ConfigUi();
         DtrEntry ??= Svc.DtrBar.Get("LazyLoot");
-        DtrEntry.OnClick = new(() => CycleFulf());
+        DtrEntry.OnClick = new((i) => CycleFulf());
 
 
         Svc.PluginInterface.UiBuilder.OpenMainUi += OnOpenConfigUi;
