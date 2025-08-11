@@ -13,7 +13,6 @@ using Dalamud.Interface.Windowing;
 using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
-using ImGuiNET;
 using Dalamud.Bindings.ImGui;
 using Lumina.Excel.Sheets;
 using PunishLib.ImGuiMethods;
@@ -301,7 +300,7 @@ public class ConfigUi : Window, IDisposable
         ImGui.SetCursorPosX(ImGui.GetCursorPosX() + (ImGui.GetColumnWidth() - ImGui.GetFrameHeight()) * 0.5f);
     }
 
-    private static nint GetDutyIcon(ContentFinderCondition duty)
+    private static ImTextureID GetDutyIcon(ContentFinderCondition duty)
     {
         var icon = duty is { HighEndDuty: true, ContentType.Value.RowId: 5 }
             ? Svc.Data.GetExcelSheet<ContentType>()
@@ -313,7 +312,7 @@ public class ConfigUi : Window, IDisposable
         }
 
         var itemIcon = GetItemIcon(icon);
-        return itemIcon?.ImGuiHandle ?? 0;
+        return itemIcon?.Handle ?? default;
     }
 
     private static void DrawUserRestrictionItems()
@@ -353,7 +352,7 @@ public class ConfigUi : Window, IDisposable
 
                 var icon = GetItemIcon(restrictedItem.Icon);
                 if (icon != null)
-                    ImGui.Image(icon.ImGuiHandle, new Vector2(24, 24));
+                    ImGui.Image(icon.Handle, new Vector2(24, 24));
                 else
                     ImGui.Text("-");
 
@@ -509,7 +508,7 @@ public class ConfigUi : Window, IDisposable
                         var icon = GetItemIcon(item.Icon);
                         if (icon != null)
                         {
-                            ImGui.Image(icon.ImGuiHandle, new Vector2(16, 16));
+                            ImGui.Image(icon.Handle, new Vector2(16, 16));
                             ImGui.SameLine();
                         }
 
