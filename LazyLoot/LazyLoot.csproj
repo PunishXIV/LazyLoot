@@ -8,9 +8,12 @@
 	</PropertyGroup>
 
 	<PropertyGroup>
-		<DalamudLibPath>$(appdata)\XIVLauncher\addon\Hooks\dev\</DalamudLibPath>
-		<DalamudPluginPath>$(appdata)\XIVLauncher\installedPlugins\LazyLoot\$(version)</DalamudPluginPath>
-		<DalamudDevPlugins>$(appdata)\XIVLauncher\devPlugins\LazyLoot\</DalamudDevPlugins>
+		<DalamudLibPath Condition="$([MSBuild]::IsOSPlatform('Windows'))">$(appdata)\XIVLauncher\addon\Hooks\dev\</DalamudLibPath>
+		<DalamudLibPath Condition="$([MSBuild]::IsOSPlatform('Linux'))">$(HOME)/.xlcore/dalamud/Hooks/dev/</DalamudLibPath>
+		<DalamudLibPath Condition="$([MSBuild]::IsOSPlatform('OSX'))">$(HOME)/Library/Application Support/XIV on Mac/dalamud/Hooks/dev/</DalamudLibPath>
+		<DalamudLibPath Condition="$(DALAMUD_HOME) != ''">$(DALAMUD_HOME)/</DalamudLibPath>
+		<!--<DalamudPluginPath>$(appdata)\XIVLauncher\installedPlugins\LazyLoot\$(version)</DalamudPluginPath>
+		<DalamudDevPlugins>$(appdata)\XIVLauncher\devPlugins\LazyLoot\</DalamudDevPlugins>-->
 		<AssemblyName>LazyLoot</AssemblyName>
 		<RootNamespace>LazyLoot</RootNamespace>
 		<PackageId>LazyLoot</PackageId>
@@ -43,12 +46,9 @@
 		<NoWarn>CS1591</NoWarn>
 	</PropertyGroup>
 
-	<PropertyGroup>
-		<DalamudLibPath>$(appdata)\XIVLauncher\addon\Hooks\dev\</DalamudLibPath>
-	</PropertyGroup>
-
+	
 	<ItemGroup>
-		<PackageReference Include="DalamudPackager" Version="12.0.0" />
+		<PackageReference Include="DalamudPackager" Version="13.0.0" />
 		<PackageReference Include="HtmlAgilityPack" Version="1.11.46" />
 		<ProjectReference Include="..\ECommons\ECommons\ECommons.csproj" />
 		<ProjectReference Include="..\PunishLib\PunishLib\PunishLib.csproj" />
@@ -66,7 +66,7 @@
 			<Private>false</Private>
 		</Reference>
 		<Reference Include="ImGui.NET">
-			<HintPath>$(DalamudLibPath)ImGui.NET.dll</HintPath>
+			<HintPath>$(DalamudLibPath)Dalamud.Bindings.ImGui.dll</HintPath>
 			<Private>false</Private>
 		</Reference>
 		<Reference Include="ImGuiScene">
