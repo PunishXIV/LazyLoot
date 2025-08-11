@@ -1,8 +1,25 @@
-﻿using Dalamud.Configuration;
+﻿using System;
+using System.Collections.Generic;
+using Dalamud.Configuration;
 using ECommons.DalamudServices;
+using FFXIVClientStructs.FFXIV.Client.Game.UI;
 
 namespace LazyLoot
 {
+    
+    public class RestrictionGroup
+    {
+        public List<CustomRestriction> Items { get; set; } = [];
+        public List<CustomRestriction> Duties { get; set; } = [];
+    }
+    
+    public class CustomRestriction
+    {
+        public uint Id { get; set; }
+        public bool Enabled { get; set; }
+        public RollResult RollRule { get; set; }
+    }
+    
     public class Configuration : IPluginConfiguration
     {
         public bool FulfEnabled = false;
@@ -61,6 +78,8 @@ namespace LazyLoot
         public bool DiagnosticsMode = false;
         public bool NoPassEmergency = false;
 
+        public RestrictionGroup Restrictions { get; set; } = new();
+        
         public int Version { get; set; }
 
         public void Save() => Svc.PluginInterface.SavePluginConfig(this);

@@ -1,11 +1,11 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
 <Project Sdk="Microsoft.NET.Sdk">
 
-	<PropertyGroup>
-		<Authors>53m1k0l0n/Gidedin</Authors>
-		<Version>5.3.2.0</Version>
-		<Description>LazyLoot plugin.</Description>
-	</PropertyGroup>
+    <PropertyGroup>
+        <Authors>53m1k0l0n/Gidedin</Authors>
+        <Version>5.3.2.1</Version>
+        <Description>LazyLoot plugin.</Description>
+    </PropertyGroup>
 
 	<PropertyGroup>
 		<DalamudLibPath Condition="$([MSBuild]::IsOSPlatform('Windows'))">$(appdata)\XIVLauncher\addon\Hooks\dev\</DalamudLibPath>
@@ -20,31 +20,31 @@
 		<Product>LazyLoot</Product>
 	</PropertyGroup>
 
-	<PropertyGroup Condition="'$(Configuration)' == 'Release'">
-		<TargetFramework>net9.0-windows</TargetFramework>
-		<Platforms>x64</Platforms>
-		<Nullable>enable</Nullable>
-		<LangVersion>latest</LangVersion>
-		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-		<ProduceReferenceAssembly>false</ProduceReferenceAssembly>
-		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-		<OutputPath>bin/Release</OutputPath>
-		<NoWarn>CS1591</NoWarn>
-	</PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+        <TargetFramework>net9.0-windows</TargetFramework>
+        <Platforms>x64</Platforms>
+        <Nullable>enable</Nullable>
+        <LangVersion>latest</LangVersion>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <OutputPath>bin/Release</OutputPath>
+        <NoWarn>CS1591</NoWarn>
+    </PropertyGroup>
 
-	<PropertyGroup Condition="'$(Configuration)' == 'Debug'">
-		<TargetFramework>net9.0-windows</TargetFramework>
-		<Platforms>x64</Platforms>
-		<Nullable>enable</Nullable>
-		<LangVersion>latest</LangVersion>
-		<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
-		<ProduceReferenceAssembly>false</ProduceReferenceAssembly>
-		<CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
-		<AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
-		<OutputPath>$(DalamudDevPlugins)</OutputPath>
-		<NoWarn>CS1591</NoWarn>
-	</PropertyGroup>
+    <PropertyGroup Condition="'$(Configuration)' == 'Debug'">
+        <TargetFramework>net9.0-windows</TargetFramework>
+        <Platforms>x64</Platforms>
+        <Nullable>enable</Nullable>
+        <LangVersion>latest</LangVersion>
+        <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+        <ProduceReferenceAssembly>false</ProduceReferenceAssembly>
+        <CopyLocalLockFileAssemblies>true</CopyLocalLockFileAssemblies>
+        <AppendTargetFrameworkToOutputPath>false</AppendTargetFrameworkToOutputPath>
+        <OutputPath>$(DalamudDevPlugins)</OutputPath>
+        <NoWarn>CS1591</NoWarn>
+    </PropertyGroup>
 
 	
 	<ItemGroup>
@@ -83,9 +83,9 @@
 		</Reference>
 	</ItemGroup>
 
-	<ItemGroup>
-	  <None Update="LazyLoot.json">
-	    <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-	  </None>
-	</ItemGroup>
+    <ItemGroup>
+        <None Update="LazyLoot.json">
+            <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+        </None>
+    </ItemGroup>
 </Project>
