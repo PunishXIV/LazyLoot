@@ -3,7 +3,7 @@ using Dalamud.Interface.Components;
 using Dalamud.Interface.Windowing;
 using ECommons.DalamudServices;
 using ECommons.ImGuiMethods;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using Lumina.Excel.Sheets;
 using System;
 using System.Numerics;
@@ -127,7 +127,7 @@ public class ConfigUi : Window, IDisposable
     private static void DrawFeatures()
     {
         ImGuiEx.ImGuiLineCentered("FeaturesLabel", () => ImGuiEx.TextUnderlined("LazyLoot Rolling Commands"));
-        ImGui.Columns(2, null, false);
+        ImGui.Columns(2, ImU8String.Empty, false);
         ImGui.SetColumnWidth(0, 80);
         ImGui.Text("/lazy need");
         ImGui.NextColumn();
@@ -242,7 +242,7 @@ public class ConfigUi : Window, IDisposable
 
         ImGui.TextWrapped($"Fancy Ultimate Lazy Feature (FULF) is a set and forget feature that will automatically roll on items for you instead of having to use the commands above.");
         ImGui.Separator();
-        ImGui.Columns(2, null, false);
+        ImGui.Columns(2, ImU8String.Empty, false);
         ImGui.SetColumnWidth(0, 80);
         ImGui.Text("/fulf need");
         ImGui.NextColumn();
