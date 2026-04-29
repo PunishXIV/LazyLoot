@@ -3,7 +3,7 @@
 
 	<PropertyGroup>
 		<Authors>53m1k0l0n/Gidedin</Authors>
-		<Version>5.3.2.9</Version>
+		<Version>5.3.3.0</Version>
 		<Description>LazyLoot plugin.</Description>
 	</PropertyGroup>
 
@@ -47,8 +47,8 @@
 
 	
 	<ItemGroup>
-		<PackageReference Include="DalamudPackager" Version="14.0.1" />
-		<PackageReference Include="ECommons" Version="3.1.0.5" />
+		<PackageReference Include="DalamudPackager" Version="14.0.2" />
+		<PackageReference Include="ECommons" Version="3.2.0" />
 		<PackageReference Include="HtmlAgilityPack" Version="1.11.46" />
 		<ProjectReference Include="..\PunishLib\PunishLib\PunishLib.csproj" />
 		<Reference Include="FFXIVClientStructs">

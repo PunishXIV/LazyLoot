@@ -13,6 +13,6 @@
   "RepoUrl": "https://github.com/PunishXIV/LazyLoot",
   "ImageUrls": null,
   "IconUrl": "https://love.puni.sh/resources/lazyloot.png",
-  "DalamudAPILevel": 14,
-  "ChangeLog": "Small improvement to the add item and add duty buttons for custom user restrictions."
+  "DalamudAPILevel": 15,
+  "ChangeLog": "- 7.5"
 }
