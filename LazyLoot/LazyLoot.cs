@@ -1,4 +1,5 @@
-﻿using Dalamud.Game.ClientState.Conditions;
+﻿using Dalamud.Game.Chat;
+using Dalamud.Game.ClientState.Conditions;
 using Dalamud.Game.Command;
 using Dalamud.Game.Gui.Dtr;
 using Dalamud.Game.Text;
@@ -8,14 +9,13 @@ using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using ECommons;
 using ECommons.DalamudServices;
+using ECommons.Logging;
 using FFXIVClientStructs.FFXIV.Client.Game.UI;
 using Lumina.Excel.Sheets;
 using PunishLib;
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using ECommons.Logging;
-using Dalamud.Game.Chat;
 
 namespace LazyLoot;
 
@@ -37,7 +37,7 @@ public class LazyLoot : IDalamudPlugin, IDisposable
     static DateTime _nextRollTime = DateTime.Now;
     static RollResult _rollOption = RollResult.UnAwarded;
     private static int _need, _greed, _pass;
-    
+
     private const uint CastYourLotMessage = 5194;
     private const uint WeeklyLockoutMessage = 4234;
 
@@ -54,7 +54,7 @@ public class LazyLoot : IDalamudPlugin, IDisposable
 
         Svc.PluginInterface.UiBuilder.OpenMainUi += OnOpenConfigUi;
         Svc.PluginInterface.UiBuilder.OpenConfigUi += OnOpenConfigUi;
-        Svc.Chat.CheckMessageHandled += NoticeLoot;
+        Svc.Chat.ChatMessage += NoticeLoot;
         Svc.ClientState.TerritoryChanged += OnTerritoryChanged;
         SyncWeeklyLockoutDutyState(Svc.ClientState.TerritoryType);
 
@@ -112,16 +112,16 @@ public class LazyLoot : IDalamudPlugin, IDisposable
         switch (args[0].ToLowerInvariant())
         {
             case "test" when args.Length >= 2:
-            {
-                switch (args[1].ToLowerInvariant())
                 {
-                    case "item":
-                        TestWhatWouldLlDo(string.Join(" ", args.Skip(2)));
-                        return;
-                }
+                    switch (args[1].ToLowerInvariant())
+                    {
+                        case "item":
+                            TestWhatWouldLlDo(string.Join(" ", args.Skip(2)));
+                            return;
+                    }
 
-                break;
-            }
+                    break;
+                }
             default:
                 RollingCommand(null!, arguments);
                 return;
@@ -347,7 +347,8 @@ public class LazyLoot : IDalamudPlugin, IDisposable
 
     private void NoticeLoot(IHandleableChatMessage handler)
     {
-        if (!Config.FulfEnabled || handler.LogKind != (XivChatType)2105) return;
+        Svc.Log.Debug($"{handler.LogKind} {handler.Message}");
+        if (!Config.FulfEnabled || handler.LogKind != XivChatType.SystemMessage) return;
         // do a few checks to see if the message is the weekly lockout message the game sends
         if (CheckAndUpdateWeeklyLockoutDutyFlag(handler.Message)) return;
         // if not Cast your lot, then just ignore
@@ -374,7 +375,7 @@ public class LazyLoot : IDalamudPlugin, IDisposable
             return false;
 
         if (message.TextValue != weeklyLockoutMessage.Value.Text) return false;
-        
+
         Config.WeeklyLockoutDutyActive = true;
         Config.WeeklyLockoutDutyTerritoryId = (ushort)Svc.ClientState.TerritoryType; //Casting this as to not fuck with configs
         Config.Save();
@@ -450,16 +451,16 @@ public class LazyLoot : IDalamudPlugin, IDisposable
                     DuoLog.Debug($"No item found matching your search '{search}'.");
                     return;
                 case > 1:
-                {
-                    Svc.Chat.Print(new SeString(new List<Payload>
+                    {
+                        Svc.Chat.Print(new SeString(new List<Payload>
                     {
                         new TextPayload(
                             $"Found {matches.Count} entries for search '{search}'. Showing the first 5:")
                     }));
 
-                    foreach (var match in matches.Take(5))
-                    {
-                        Svc.Chat.Print(new SeString(new List<Payload>
+                        foreach (var match in matches.Take(5))
+                        {
+                            Svc.Chat.Print(new SeString(new List<Payload>
                             {
                                 new TextPayload($"[LazyLoot Item Test] :: ID {match.RowId} :: "),
                                 new UIForegroundPayload((ushort)(0x223 + match.Rarity * 2)),
@@ -470,11 +471,11 @@ public class LazyLoot : IDalamudPlugin, IDisposable
                                 new UIForegroundPayload(0),
                                 new UIGlowPayload(0),
                             })
-                        );
-                    }
+                            );
+                        }
 
-                    return;
-                }
+                        return;
+                    }
                 default:
                     itemId = matches[0].RowId;
                     break;

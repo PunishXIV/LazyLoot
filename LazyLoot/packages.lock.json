@@ -23,8 +23,7 @@
       "punishlib": {
         "type": "Project",
         "dependencies": {
-          "DalamudPackager": "[14.0.2, )",
-          "ECommons": "[3.2.0, )"
+          "ECommons": "[3.1.0.30, )"
         }
       }
     }
